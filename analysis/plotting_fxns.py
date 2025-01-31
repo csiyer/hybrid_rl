@@ -152,10 +152,18 @@ def fit_logistic(x,y):
     return x_fit, y_fit
 
 def plot_separate_subjects(data, x_cols, y_cols, x_texts, y_texts, logistic_fit, title=''):
+    data = data.copy()
     fig,axs = plt.subplots(1,3, figsize=(12,4))
     fig.suptitle(title)
 
     for ax,x_col,y_col,x_text,y_text in zip(axs,x_cols,y_cols,x_texts,y_texts):
+        # bin if necessary
+        if len(data[x_col].unique()) > 20:
+            xmin, xmax  = (min(data[x_col]), max(data[x_col]))
+            bins = np.linspace(xmin,xmax,11)
+            bin_centers = bins[:-1] + np.diff(bins) / 2 
+            data[x_col] = pd.cut(data[x_col], bins, labels=bin_centers).astype(float)
+
         group_data = data.groupby(["Sub", x_col])[y_col].mean().reset_index()
         # plot subject data
         for sub in group_data["Sub"].unique():
@@ -171,12 +179,16 @@ def plot_separate_subjects(data, x_cols, y_cols, x_texts, y_texts, logistic_fit,
                 ax.plot(x, y, alpha=0.5)
         # plot mean
         mean_data = data.groupby(x_col)[y_col].mean().reset_index()
-        x_mean_fit, y_mean_fit = fit_logistic(x = mean_data[x_col].values, y = mean_data[y_col].values)
-        ax.plot(x_mean_fit, y_mean_fit, color='black', linewidth=2)
+        if logistic_fit:
+            x_mean_fit, y_mean_fit = fit_logistic(x = mean_data[x_col].values, y = mean_data[y_col].values)
+            ax.plot(x_mean_fit, y_mean_fit, color='black', linewidth=3)
+        else:
+            ax.plot(mean_data[x_col].values, mean_data[y_col].values, color='black', linewidth=3)
 
         ax.set_xlabel(x_text, fontsize=12)
         ax.set_ylabel(y_text, fontsize=12)
         ax.set_title(title, fontsize=14)
+        ax.set_ylim((0,1.1))
 
     plt.tight_layout()
     plt.show()
@@ -243,3 +255,5 @@ def plot_lingering_modes(data, consecutive_pairs = False, oldnew_vs_newnew=False
     plt.show()
 
 
+def plot_reversal_inference(data):
+    data = data.copy()
