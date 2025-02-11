@@ -2,6 +2,7 @@
  * Feedback trial stimuli
  * testing everything
 /*********/ 
+var jsPsych = initJsPsych();
 
 
 /* Save experimental info */
@@ -40,20 +41,30 @@ console.log('Iteration: ', params.iteration)
 
 /*** 1. Initial stuff ***/
 
-var wrong_browser = { // if not using Chrome, prompt them to use chrome 
-    type: 'html-keyboard-response',
-    stimulus: 'Welcome! Please reopen this page in Chrome to begin the experiment.',
-    choices: []
+var browser_check = { // if not using Chrome, prompt them to use chrome 
+    type: jsPsychBrowserCheck,
+    // minimum_width: 1350,
+    // minimum_height: 759,
+    inclusion_function: (data) => {
+        return 'chrome' == data.browser && !data.mobile
+    },
+    exclusion_message: (data) => {
+        if (data.browser != 'chrome') {
+            return '<p>Welcome! Please reopen this page in Chrome to begin the experiment.</p>'
+        } else if (data.mobile) {
+            return '<p>Welcome! Please reopen this page in Chrome on a computer.</p>'
+        }
+    },
 };
 
 var local_alert = { // running non-local version?
-    type: 'html-keyboard-response',
+    type: jsPsychHtmlKeyboardResponse,
     stimulus: 'You are running this task locally! If you are a participant, please close this window and contact the experimenter.',
-    choices: []
+    choices: "ALL_KEYS"
 };
 
 var iti = {
-    type: 'html-keyboard-response',
+    type: jsPsychHtmlKeyboardResponse,
     stimulus: '<div style="font-size:60px;">+</div>',
     choices: [],
     trial_duration: get_iti(),
@@ -64,7 +75,7 @@ var iti = {
 /*** 2. Welcome & instructions ***/
 
 var welcome_fullscreen = {
-    type: 'fullscreen',
+    type: jsPsychFullscreen,
     message: "<p style= 'font-size:200%' ><b>Welcome to our experiment!</b></br></p>" + 
         "<p>The experiment will take approximately " + params.total_completion_time + " minute(s).</p><br><br>"+
         '<p>Before starting, please note that you are participating in a scientific study. Your responses are very important to us, and will be a huge help for our research.<br>' +
@@ -154,19 +165,103 @@ var instructions = {
 }
 
 
+var comprehension_check = {
+    type: jsPsychSurveyMultiChoice,
+    questions: [{
+        prompt: "In this game, individual choices are between:",
+        options: ['2 decks of cards', '2 different blues', 'Several geometric shapes']
+    },
+    {
+        prompt: "After each choice, you will receive feedback about how much money your chosen card was worth.",
+        options: ["True", "False"]
+    },
+    {
+        prompt: "Each card is worth between:",
+        options: ["$0.00 - $5.00", "$0.00 - $1.00", "$0.50 - $1.50"]
+    },
+    {
+        prompt: "If you see the same object on a card, then that card is worth the same as it was last time you saw it.",
+        options: ["False", "True"]
+    },
+    {
+        prompt: "One deck will be luckier than the other deck at different points in the experiment.",
+        options: ["True", "False"]
+    },
+    {
+        prompt: "The decks will sometimes switch whether they are lucky or unlucky.",
+        options: ["False", "True"]
+    },
+    {
+        prompt: "Which key should you use to respond to an image on the left side?",
+        options: ["&#x2190;", "&#x2192;"]
+    }],
+    on_finish: function (data) {
+        var responses = JSON.parse(data.responses);
+        var incorrect = false;
+        if (responses["Q0"] != "2 decks of cards") {
+            incorrect = true;
+        } else if (responses["Q1"] != "True") {
+            incorrect = true;
+        } else if (responses["Q2"] != "$0.00 - $1.00") {
+            incorrect = true;
+        } else if (responses["Q3"] != "True") {
+            incorrect = true;
+        } else if (responses["Q4"] != "True") {
+            incorrect = true;
+        } else if (responses["Q5"] != "True") {
+            incorrect = true;
+        } else if (responses["Q6"] != "&#x2190;") {
+            incorrect = true;
+        } 
+        data.failed_comprehension_check = incorrect
+        // if (incorrect && !params.local) {
+        //     var new_timeline = {
+        //         timeline: [repeat_screen,
+        //             instructions_repeat,
+        //             comprehension_check]
+        //     }
+        // } else {
+        //     var new_timeline = {
+        //         timeline: [start_experiment,
+        //             start_experiment2,
+        //             task2_procedure,
+        //             block_break1]
+        //     }
+        // }
+    }
+};
+
 
 
 /*** 3. Practice ***/
-//n_pracitce_trials: 5
-var practice_block = {
 
+// the actual practice trials will use the normal choice block
+
+var post_practice = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus:  "<p style='font-size: 150%'><b>Well done!</b></p>" +
+        "<p>You are ready to begin the experiment.</p>" +
+        "<p>Press the 'Continue' button to begin.</p>",
+    choices: ['Continue'],
+    trial_duration: [10000],
+    on_finish: function (){
+        // change the trial types so they are marked for practice
+        ['choice','feedback','confirmation'].forEach(trial_label => {
+            let trials_to_edit = jsPsych.data.get().filter({trial_type: trial_label});
+            trials_to_edit.trials.forEach(trial => {
+                trial.trial_type = trial_label + "_practice"
+            })
+        });
+
+        // reset for the experiment
+        trial_number = 0
+        block_number = 0
+        trials_since_reversal = 0
+        outcomes = generate_outcomes() // new outcomes
+        reversals = generate_block_reversals() // set new reversals
+        [deck_locs.blue, deck_locs.orange] = [deck_locs.orange, deck_locs.blue] // reverse deck locations
+    }
 }
-
-// detect if people just pick the same thing every single time or some filtering
-var comprehension_check = {
-    // quiz if they fail the practice
-}  
-
 
 
 /*** 4. Task ***/
@@ -186,8 +281,9 @@ if (Math.random () <= 0.5) {// initialize random which deck is lucky
     var deck_locs = { blue: 'right', orange: 'left'}
 }
 
-// initialize outcomes (these will be reset each reversal) 
-var outcomes = generate_outcomes()
+// initialize outcomes and reversals
+var outcomes = generate_outcomes() // reset at each reversal
+var reversals = generate_block_reversals() // just for one block, will be reset
 
 // keep track of all objects we've already used
 var possible_object_nums = [] 
@@ -216,14 +312,6 @@ var all_outcomes = []
 var trial_number = 0
 var block_number = 0
 var trials_since_reversal = 0
-
-// for each block
-// generate reversals
-// swap dec locations
-// push trials
-// push break 
-// var ALL_BLOCK_TRIALS = []
-// var reversals = get_block_reversals()
 
 
 var choice = {
@@ -463,12 +551,12 @@ var choice = {
 
 // choice confirmation just puts a green box around the chosen item until the end of the trial
 var choice_confirmation = {
-    type: 'html-keyboard-response',
+    type: jsPsychHtmlKeyboardResponse,
     stimulus: function () {
         if (jsPsych.data.get().last(1).values()[0].deck_chosen == "no_response") {
             return '' // 0 trial duration anyways, just skip 
         } else {
-            if (jsPsych.data.get().last(1).values()[0].left_chosen == 1;) {
+            if (jsPsych.data.get().last(1).values()[0].left_chosen == 1) {
                 document.body.style.background = "url('stimuli/blank_confirmation_left.jpg') no-repeat center center";
             } else {
                 document.body.style.background = "url('stimuli/blank_confirmation_right.jpg') no-repeat center center";
@@ -481,7 +569,7 @@ var choice_confirmation = {
         if (jsPsych.data.get().last(1).values()[0].deck_chosen == "no_response") {
             return 0 
         } else {
-            return (params.choice_time - jsPsych.data.get().last(1).values()[0].rt;);
+            return (params.choice_time - jsPsych.data.get().last(1).values()[0].rt);
         }
     },
     data: { trial_type: 'confirmation' }
@@ -490,7 +578,7 @@ var choice_confirmation = {
 
 // feedback portion will show the value of the chosen card
 var feedback = {
-    type: 'html-keyboard-response',
+    type: jsPsychHtmlKeyboardResponse,
     stimulus: function () {
         document.body.style.background = "url('stimuli/blank_background.jpg') no-repeat center center";
 
@@ -553,26 +641,36 @@ var feedback = {
     data: { trial_type: 'feedback' }
 };
 
-
 var block_break = {
-    type: 'html-button-response',
+    type: jsPsychHtmlButtonResponse,
     stimulus:  "<p style='font-size: 150%'><b>Take a break!</b></p>" +
-        "<p>Take up to 2 minutes, and press 'Continue' when you're ready to begin again.</p>" +
+        "<p>Take up to 2 minutes, and press 'Continue' when you're ready to begin again.</p>",
     choices: ['Continue'],
     trial_duration: [120000],
+    on_finish: function (){
+        // reset reversals for the next block
+        reversals = generate_block_reversals() 
+        // flip deck positions
+        [deck_locs.blue, deck_locs.orange] = [deck_locs.orange, deck_locs.blue]
+    }
 }
 
-
 var practice_procedure = {
-    timeline: [fixation, practice_choice, choice_confirmation, feedback],
-    timeline_variables: [{ stimulus: "", data: {} }];
-    repetitions: params.n_practice_trials
+    timeline: [iti, choice, choice_confirmation, feedback],
+    // timeline_variables: [{ stimulus: "", data: {} }]; // jspsych wants this for some reason?
+    repetitions: params.n_practice_trials,
 };
 
-var main_procedure = {
+var block_procedure = {
     timeline: [iti, choice, choice_confirmation, feedback],
-    timeline_variables: [{ stimulus: "", data: {} }];
-    repetitions: params.n_trials_per_block
+    // timeline_variables: [{ stimulus: "", data: {} }];
+    repetitions: params.n_trials_per_block,
+}
+
+var main_task_procedure = {
+    timeline: [block_procedure, block_break],
+    // timeline_variables: [{ stimulus: "", data: {} }];
+    repetitions: params.n_blocks
 }
 
 
@@ -615,34 +713,25 @@ var debrief_block = {
 }
 
 var fullscreen_close = {
-    type: 'fullscreen',
+    type: jsPsychFullscreen,
     fullscreen_mode:false,
 }
 
 var end_screen = {
-    type: 'html-keyboard-response',
+    type: jsPsychHtmlKeyboardResponse,
     stimulus: '<p>Thank you for completing the experiment! Press any key to be redirected back to Prolific.</p>',
-    response_ends_trial: true
+    response_ends_trial: true,
+    on_finish: function() {
+        window.location = params.prolific_redirect_link
+    }
 }
 
 
 
 /*** 6. Populate timeline and run experiment ***/
 
-if (get_browser_type() != 'Chrome') {
-	timeline.push(wrong_browser)
-}
-if (params.local) {
-    timeline.push(local_alert)
-}
-
-timeline.push(welcome_fullscreen, instructions)
-// task in here
-timeline.push(debrief_block, fullscreen_close, end_screen)
-
-
 // preload images
-all_images = [
+images = [
     'stimuli/online_consent.pdf',
     'stimuli/example-choice.png',
     'stimuli/example-feedback.png',
@@ -667,17 +756,22 @@ for (var i = 0; i < vals.length; i++) {
     //images.push('stimuli/feedback/no_deck/'+vals[i])
     images.push('stimuli/feedback/blank.jpg')
 }
+var preload_images = {
+    type: jsPsychPreload,
+    images: images
+}
 
+// populate timeline
+var timeline = [];
+if (params.local) {
+    timeline.push(local_alert)
+}
+timeline.push(browser_check, preload_images)
+timeline.push(welcome_fullscreen, instructions)
+// timeline.push(comprehension_check)
+timeline.push(practice_procedure)
+timeline.push(main_task_procedure)
+timeline.push(debrief_block, fullscreen_close, end_screen)
 
-jsPsych.init({
-    timeline: timeline,
-    preload_images: all_images,
-    exclusions: {
-        min_width: 1350,
-        min_height: 759
-    },
-    on_finish: function() {
-      window.location = params.prolific_redirect_link
-    }
-});
+jsPsych.run(timeline)
 

@@ -50,16 +50,6 @@ function array_average(arr) {
 //     return two_value_array
 // }
 
-function get_browser_type(){
-    var N= navigator.appName, ua= navigator.userAgent, tem;
-    var M= ua.match(/(opera|chrome|safari|firefox|msie)\/?\s*(\.?\d+(\.\d+)*)/i);
-    if(M && (tem= ua.match(/version\/([\.\d]+)/i))!= null) M[2]= tem[1];
-    M= M? [M[1], M[2]]: [N, navigator.appVersion,'-?'];
-    ////// includes version: ////////  return M.join(' '),
-    return  M[0]
-};
-  
-
 /* Task-specific helpers */
 
 function get_iti() {
@@ -71,7 +61,7 @@ function get_iti() {
     }
 }
 
-function get_block_reversals() {
+function generate_block_reversals() {
     var reversals = []
     var trial_count = 0
     while (trial_count < params.n_trials_per_block) {
@@ -92,14 +82,13 @@ function generate_outcomes() {
     possible_outcomes = params.possible_outcomes // [0, 0.2, 0.4, 0.6, 0.8, 1]
     function gen_outcomes_helper(dist, values) {
         let o = values.map((val, i) => Array(dist[i]).fill(val))
-        return shuffle( o.flat() )
+        return array_shuffle( o.flat() )
     }
     return {
         'lucky': gen_outcomes_helper(luckydist, possible_outcomes), 
         'unlucky': gen_outcomes_helper(luckydist, possible_outcomes)
     }
 }
-
 
 function sample_random_stim(blue_orange, possible_objects) {
 
