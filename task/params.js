@@ -4,7 +4,7 @@ params = {
     iteration: 'testing',
     prolific_redirect_link: 'https://www.google.com',
 
-    background: 'lightgray',
+    background: 'white', // lightgray
     text_color: 'black',
 
     total_completion_time: 20, // minutes // calculate?
@@ -14,7 +14,7 @@ params = {
 
     n_trials_per_block: 80,
     n_blocks: 4, 
-    n_pracitce_trials: 5,
+    n_practice_trials: 5,
 
     choice_time: 2000, //ms
     choice_feedback_isi: 0,
@@ -47,10 +47,9 @@ params.n_trials_total = params.n_blocks * params.n_trials_per_block // 320
 
 params.total_completion_time = 20 // minutes
 
-
-if (params.local) { // testing mode
-    params.choice_time = 10
-    params.feedback_time = 5
-    params.exponential_iti = false
-    params.iti = 5
-}
+// if (params.local) { // testing mode
+//     params.choice_time = 10
+//     params.feedback_time = 5
+//     params.exponential_iti = false
+//     params.iti = 5
+// }

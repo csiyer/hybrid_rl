@@ -30,6 +30,7 @@ function array_shuffle(arr) {
         arr[i] = arr[j];
         arr[j] = temp;
     }
+    return arr
 }
 
 function array_average(arr) {
@@ -83,6 +84,10 @@ function generate_outcomes() {
     function gen_outcomes_helper(dist, values) {
         let o = values.map((val, i) => Array(dist[i]).fill(val))
         return array_shuffle( o.flat() )
+    }
+    function gen_outcomes_helper(dist, values) {
+        let o = values.map((val, i) => Array(dist[i]).fill(val))
+        return o.flat() 
     }
     return {
         'lucky': gen_outcomes_helper(luckydist, possible_outcomes), 

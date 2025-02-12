@@ -6,14 +6,15 @@ var jsPsych = initJsPsych();
 
 
 /* Save experimental info */
-experiment_id = jsPsych.randomization.randomID(20) // random subject ID of length 20
-date = + new Date()
+const experiment_id = jsPsych.randomization.randomID(20) // random subject ID of length 20
+const date = + new Date()
 console.log('Experiment ID: ', experiment_id)
 
-var subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID');
-var study_id = jsPsych.data.getURLVariable('STUDY_ID');
-var session_id = jsPsych.data.getURLVariable('SESSION_ID');
+const subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID');
+const study_id = jsPsych.data.getURLVariable('STUDY_ID');
+const session_id = jsPsych.data.getURLVariable('SESSION_ID');
 console.log('Prolific info:', subject_id, study_id, session_id)
+const filename = `${experiment_id}_${study_id}_${subject_id}_${session_id}.csv`
 
 jsPsych.data.addProperties({
     experiment_id: experiment_id, //unique ID
@@ -77,10 +78,9 @@ var iti = {
 var welcome_fullscreen = {
     type: jsPsychFullscreen,
     message: "<p style= 'font-size:200%' ><b>Welcome to our experiment!</b></br></p>" + 
-        "<p>The experiment will take approximately " + params.total_completion_time + " minute(s).</p><br><br>"+
+        "<p>The experiment will take approximately " + params.total_completion_time + " minute(s).</p>"+
         '<p>Before starting, please note that you are participating in a scientific study. Your responses are very important to us, and will be a huge help for our research.<br>' +
-        'We ask that you give the study your full attention and best effort.<br>' +
-        'Responding randomly, exiting full screen, or responding to only a few trials will lead your data to be rejected.<br>' +
+        'We will have to reject your data if you respond randomly, exit full screen, or respond to only a few trials.<br>' +
         'We hope you choose to participate in our study!</p>'
         ,
     button_label: "Click to enter full screen and begin experiment",
@@ -92,69 +92,72 @@ var welcome_fullscreen = {
 }
 
 var instructions = {
-    type: instructions,
+    type: jsPsychInstructions,
     pages: [
         "<p style='font-size:150%''><b>Consent Form</b></p>" + 
         "<p>Before we get started, feel free to take a look at our consent form, and download a copy for your records if you like:<p>" + 
         "<div style='padding:1%' >"  + 
-        "<embed src='stimuli/online_consent.pdf' width='100%' height='400px' style='border: 2px solid lightgrey';/>" + 
+        "<embed src='stimuli/online_consent.png' width='100%' height='400px' style='border: 2px solid lightgrey';/>" + 
         "</div>" + 
         "<p>Click 'Next' if you agree to participate and you will begin the experiment.</p>"
         ,  
 
         "<p style='font-size: 150%'><b>Instructions</b></p>" +
-        "<p><img  style='width:30%'' src='stimuli/example-choice.png'></img>" +
+        "<p><img  style='width:80%'' src='stimuli/examples/example-choice.png'></img></p>" +
         "<p>In this experiment, you will play a card came.</p>" +
-        "<br>On each trial, you will pick between two cards, from an <b>orange deck</b> and a <b>blue deck</b>." +
-        "<br>You will have " + params.choice_time / 1000 + " seconds to choose a card with the left (<b>&#x2190;</b>) and right (<b>&#x2192;</b>) arrow keys.</p>"
+        "<p>On each trial, you will pick between two cards, from an <b>orange deck</b> and a <b>blue deck</b>.</p>" +
+        "<p>You will have " + params.choice_time / 1000 + " seconds to choose a card with the <b>left (&#x2190;) and right (&#x2192;) arrow keys</b>.</p>" +
+        "<p>Let's say you pick the microscope...</p>"
         ,
 
         "<p style='font-size: 150%'><b>Instructions</b></p>" +
-        "<p><img  style='width:30%'' src='stimuli/example-feedback.png'></img>" +
-        "<p>Your chosen card will then turn over, and you'll see how much it was worth.</p>" +
-        "<p>Each card is worth between $0 and $1.</p>" +
-        "<p>In this example, you chose the the card on the right (<b>&#x2192;</b>), which was worth <b>$1</b></p>." 
-        ,
-
-        "<p style='font-size: 150%'><b>Instructions</b></p>" +
-        "<p><img  style='width:30%'' src='stimuli/example-feedback.png'></img>" +
+        "<p><img  style='width:100%' src='stimuli/examples/example-feedback.png'></img></p>" +
+        "<p>Your chosen card will then turn over, and you'll see how much it was worth <b>(between $0 and $1)</b>.</p>" +
+        "<p>In this example, you chose the the card on the right (<b>&#x2192;</b>), which was worth <b>$1</b>.</p>" +
         "<p>Your goal is to pick cards to make as much money as possible.</p>" +
         "<p>Your <b>real bonus</b> will be based on how much money you accumulate in the experiment!!</p>"
         ,
 
         "<p style='font-size: 150%'><b>Instructions</b></p>" +
-        "<p><img  style='width:30%'' src='stimuli/example-trial.png'></img>" +
         "<p>There are two ways to maximize the amount of money you make in this experiment: </p>" +
-        "<p>1. Sometimes you will encounter a <b>card you have chosen before</b>." + 
-        "<br> These cards will always be worth the same amount as the first time you chose it," + 
+        "<p>(1) Sometimes you will encounter a <b>card you have chosen before</b>." + 
+        "<br> These cards will always be worth the <b>same amount</b> as the first time you chose it," + 
         "<br> regardless of which deck it appears in the lucky or unlucky deck.</p>"+
-        "<p><img  style='width:30%'' src='stimuli/example-old-card.png'></img>" +
-        "<p>So, you can use your memory to pick cards that are worth more money.</p>"
+        "<p><img  style='width:100%'' src='stimuli/examples/example-old-card.png'></img></p>" +
+        "<p>So, you can use your memory to pick cards that are worth more.</p>"
         ,
 
         "<p style='font-size: 150%'><b>Instructions</b></p>" +
-        "<p><img  style='width:30%'' src='stimuli/example-trial.png'></img>" +
-        "<p>There are two ways to maximize the amount of money you make in this experiment: </p>" +
-        "<p>2. In addition, at any point in the experiment, one of the decks is <b>\"lucky\"</b>." + 
+        "<p>(2) In addition, at any point in the experiment, one of the decks is <b>\"lucky.\"</b>" + 
         "<br> This means that this deck will tend to give good rewards." + 
         "<br> Here's an example of the difference in rewards between the lucky and unlucky decks:<br>"+
-        "<p><img  style='width:30%'' src='stimuli/example-deck-values.png'></img>" +
-        "<p> But, the lucky deck may switch at any point (between orange and blue)!</p>"+
-        "<p><img  style='width:30%'' src='stimuli/example-deck-luck.png'></img>" +
+        "<p><img  style='width:100%'' src='stimuli/examples/example-deck-values.png'></img></p>" +
         "<p>So, you can pick cards according to which deck you think is luckier at that point, and you will earn more.</p>"
         ,
 
         "<p style='font-size: 150%'><b>Instructions</b></p>" +
-        "<p><img  style='width:30%'' src='stimuli/example-choice.png'></img>" +
-        "<p>To review, you will see pairs of cards and select one with the left (<b>&#x2190;</b>) and right (<b>&#x2192;</b>) arrow keys.</p>" +
-        "<p>You'll then see how much your card was worth, and you'll receive a final bonus proportionate to your total sum.</p>" +
-        "<p>You can use (1) your memory, or (2) which deck you think is lucky at each point, to earn more money.</p>" 
+        "<p>(2) In addition, at any point in the experiment, one of the decks is <b>\"lucky.\"</b>" + 
+        "<br> This means that this deck will tend to give good rewards." + 
+        "<br> Here's an example of the difference in rewards between the lucky and unlucky decks:<br>"+
+        "<p><img  style='width:100%'' src='stimuli/examples/example-deck-values.png'></img></p>" +
+        "<p>So, you can pick cards according to which deck you think is luckier at that point, and you will earn more.</p>"+
+
+        "<p> <b>However, the lucky deck may switch at any point</b> (between orange and blue) without you knowing!</p>"+
+        "<p><img  style='width:100%'' src='stimuli/examples/example-deck-luck.png'></img></p>"
         ,
 
         "<p style='font-size: 150%'><b>Instructions</b></p>" +
-        "<p>When you press continue, you will begin a <b>brief practice period</b>.</p>" +
-        "<p>Remember, select a card from the orange or blue deck with the <b>left (&#x2190;)</b> and <b>right (&#x2192;)</b> arrow keys.</p>" + 
-        "<p>And remember to pay attention to the <b>lucky deck</p> and <b>repeated cards</b> to maximize your bonus!</p>"
+        "<p><img  style='width:60%'' src='stimuli/examples/example-choice.png'></img></p>" +
+        "<p>To review, you will see pairs of cards and select one with the <b>left (&#x2190;) and right (&#x2192;) arrow keys</b>.</p>" +
+        "<p>You'll then see how much your card was worth, and you'll receive a <b>final bonus</b> proportionate to your total sum.</p>" +
+        "<p>You can use (1) your <b>memory</b>, or (2) which deck you think is <b>lucky</b> at each point, to earn more money.</p>" 
+        ,
+
+        "<p style='font-size: 150%'><b>Practice</b></p>" +
+        "<p>When you press 'Next', you will begin a <b>brief practice period</b>.</p>" +
+        "<p>If you need to review the rules, please press 'Previous' to go back.</p>" +
+        "<p>Remember, select a card from the orange or blue deck with the <b>left (&#x2190;) and right (&#x2192;) arrow keys</b>.</p>" + 
+        "<p>And remember to pay attention to the <b>lucky deck</b> and <b>repeated cards</b> to maximize your bonus!</p>"
     ],
     show_clickable_nav: true,
     show_page_number: false,
@@ -313,26 +316,31 @@ var trial_number = 0
 var block_number = 0
 var trials_since_reversal = 0
 
+// previously, trial data (stims, reward, etc.) was determined in the on_start function
+// and saved to the trial data, but in the new jsPsych it seems that the trial data
+// cannot be permanently edited from the on_start function. So, we will instead store this 
+// data temporarily on each trial in the following variable
+var temp_data = {}
 
 var choice = {
-    type: "html-keyboard-response",
+    type: jsPsychHtmlKeyboardResponse,
     stimulus: "",
     choices: ['ArrowLeft', 'ArrowRight'],
     trial_duration: params.choice_time,
     response_ends_trial: true,
     on_start: function (choice) {
-
+        // all of this is stored in temp_data and then reloaded in the on_finish because accessing choice.data doesn't work
         trial_number += 1;
-        choice.data.trial_type = 'choice';
-        choice.data.trial_number = trial_number;
-        choice.data.block_number = block_number;
-        choice.data.reversal_trial = 0;
-        choice.data.lucky_deck = curr_lucky_deck,
-        choice.data.blue_luck = deck_lucks['blue'];
-        choice.data.orange_luck = deck_lucks['orange'];
-        choice.data.blue_loc = deck_locs['blue'];
-        choice.data.orange_loc = deck_locs['orange'];
-        choice.data.old_trial = 0;
+        temp_data.trial_type = 'choice';
+        temp_data.trial_number = trial_number;
+        temp_data.block_number = block_number;
+        temp_data.reversal_trial = 0;
+        temp_data.lucky_deck = curr_lucky_deck,
+        temp_data.blue_luck = deck_lucks['blue'];
+        temp_data.orange_luck = deck_lucks['orange'];
+        temp_data.blue_loc = deck_locs['blue'];
+        temp_data.orange_loc = deck_locs['orange'];
+        temp_data.old_trial = 0;
 
         if (params.randomize_deck_locs_per_trial) { // not currently using this
             if (Math.random() <= 0.5) {
@@ -340,8 +348,8 @@ var choice = {
             } else {
                 deck_locs = { blue: 'right', orange: 'left'};
             }
-            choice.data.blue_loc = deck_locs['blue'];
-            choice.data.orange_loc = deck_locs['orange'];
+            temp_data.blue_loc = deck_locs['blue'];
+            temp_data.orange_loc = deck_locs['orange'];
         } 
 
         // First, is it a reversal? figure out which deck is lucky
@@ -350,17 +358,17 @@ var choice = {
             [deck_lucks.blue, deck_lucks.orange] = [deck_lucks.orange, deck_lucks.blue]
             curr_lucky_deck = (curr_lucky_deck === 'blue') ? 'orange' : 'blue'; // swap
             trials_since_reversal = 0
-            choice.data.reversal_trial = 1
+            temp_data.reversal_trial = 1
             // regenerate outcomes for the upcoming reversal period
             outcomes = generate_outcomes()
         }
-        choice.data.trials_since_reversal = trials_since_reversal
+        temp_data.trials_since_reversal = trials_since_reversal
         trials_since_reversal += 1
 
 
         // Next, is this an old trial?
         if (Math.random() <= params.old_trial_proportion && trial_number > params.old_delay_min) {
-            choice.data.old_trial = 1
+            temp_data.old_trial = 1
 
             // our strategy will be to get candidate old trials and then select based on some criteria
             old_candidates = []
@@ -414,76 +422,76 @@ var choice = {
                 }
                 
                 old_trial_tracking[old_object_trial]["shown_twice"] = true;
-                choice.data.old_trial_number = old_trial_tracking[old_object_trial]["trial_number"];
-                choice.data.old_deck = old_trial_tracking[old_object_trial]["deck"];
-                choice.data.old_luck = old_trial_tracking[old_object_trial]["luck"];
-                choice.data.old_value = old_trial_tracking[old_object_trial]["value"];
-                choice.data.old_object = old_trial_tracking[old_object_trial]["object"];
+                temp_data.old_trial_number = old_trial_tracking[old_object_trial]["trial_number"];
+                temp_data.old_deck = old_trial_tracking[old_object_trial]["deck"];
+                temp_data.old_luck = old_trial_tracking[old_object_trial]["luck"];
+                temp_data.old_value = old_trial_tracking[old_object_trial]["value"];
+                temp_data.old_object = old_trial_tracking[old_object_trial]["object"];
 
                 // remove old value from deck outcomes list
-                const idx_of_value = outcomes[deck_lucks[choice.data.old_deck]].indexOf(choice.data.old_value)
-                outcomes[deck_lucks[choice.data.old_deck]].splice(idx_of_value, 1)
+                const idx_of_value = outcomes[deck_lucks[temp_data.old_deck]].indexOf(temp_data.old_value)
+                outcomes[deck_lucks[temp_data.old_deck]].splice(idx_of_value, 1)
 
                 // assign the stimuli 
                 var rand_idx = get_random_index(possible_object_nums) // get a random object
                 var new_object = possible_object_nums[rand_idx] 
                 possible_object_nums.splice(rand_idx, 1) // remove it from array of possible objects
 
-                if (choice.data.old_deck == 'blue') {
-                    choice.data.blue_object = choice.data.old_object
-                    choice.data.blue_value = choice.data.old_value
-                    choice.data.orange_object = new_object
-                    choice.data.orange_value = outcomes[deck_lucks['orange']].shift()
+                if (temp_data.old_deck == 'blue') {
+                    temp_data.blue_object = temp_data.old_object
+                    temp_data.blue_value = temp_data.old_value
+                    temp_data.orange_object = new_object
+                    temp_data.orange_value = outcomes[deck_lucks['orange']].shift()
                 } else {
-                    choice.data.orange_object = choice.data.old_object
-                    choice.data.orange_value = choice.data.old_value
-                    choice.data.blue_object = new_object
-                    choice.data.blue_value = outcomes[deck_lucks['blue']].shift()
+                    temp_data.orange_object = temp_data.old_object
+                    temp_data.orange_value = temp_data.old_value
+                    temp_data.blue_object = new_object
+                    temp_data.blue_value = outcomes[deck_lucks['blue']].shift()
                 }
 
             } else {
                 // failed to find old object, treat as a new/new trial -- this should be rare!!!!
                 console.log('Failed to find old object, trial ' + trial_number)
-                choice.data.old_trial = 0
+                temp_data.old_trial = 0
 
                 rand_idx = get_random_index(possible_object_nums) // get a random object
-                choice.data.blue_object = possible_object_nums[rand_idx]
+                temp_data.blue_object = possible_object_nums[rand_idx]
                 possible_object_nums.splice(rand_idx, 1) // remove it from array of possible objects
-                choice.data.blue_value = outcomes[deck_lucks['blue']].shift() // remove first element and its the value
+                temp_data.blue_value = outcomes[deck_lucks['blue']].shift() // remove first element and its the value
 
                 rand_idx = get_random_index(possible_object_nums)
-                choice.data.orange_object = possible_object_nums[rand_idx]
+                temp_data.orange_object = possible_object_nums[rand_idx]
                 possible_object_nums.splice(rand_idx, 1)
-                choice.data.orange_value = outcomes[deck_lucks['orange']].shift()
+                temp_data.orange_value = outcomes[deck_lucks['orange']].shift()
             }
            
         } else { // new/new trial 
             rand_idx = get_random_index(possible_object_nums) // get a random object
-            choice.data.blue_object = possible_object_nums[rand_idx]
+            temp_data.blue_object = possible_object_nums[rand_idx]
             possible_object_nums.splice(rand_idx, 1) // remove it from array of possible objects
-            choice.data.blue_value = outcomes[deck_lucks['blue']].shift() // remove first element and its the value
+            temp_data.blue_value = outcomes[deck_lucks['blue']].shift() // remove first element and its the value
 
             rand_idx = get_random_index(possible_object_nums)
-            choice.data.orange_object = possible_object_nums[rand_idx]
+            temp_data.orange_object = possible_object_nums[rand_idx]
             possible_object_nums.splice(rand_idx, 1)
-            choice.data.orange_value = outcomes[deck_lucks['orange']].shift()
+            temp_data.orange_value = outcomes[deck_lucks['orange']].shift()
         }
 
         // Finally, assign the stimuli to right/left and embed
         if (deck_locs['blue'] == 'left') {
-            left_stim = "stimuli/blue/object" + trial_data.blue_object + ".jpg"
-            right_stim =  "stimuli/orange/object" + trial_data.orange_object + ".jpg"
-            choice.data.left_value = choice.data.blue_value
-            choice.data.left_object = choice.data.blue_object
-            choice.data.right_value = choice.data.orange_value
-            choice.data.right_object = choice.data.orange_object
+            left_stim = "stimuli/blue/object" + temp_data.blue_object + ".jpg"
+            right_stim =  "stimuli/orange/object" + temp_data.orange_object + ".jpg"
+            temp_data.left_value = temp_data.blue_value
+            temp_data.left_object = temp_data.blue_object
+            temp_data.right_value = temp_data.orange_value
+            temp_data.right_object = temp_data.orange_object
         } else {
-            left_stim = "stimuli/orange/object" + trial_data.orange_object + ".jpg"
-            right_stim =  "stimuli/blue/object" + trial_data.blue_object + ".jpg"
-            choice.data.left_value = choice.data.orange_value
-            choice.data.left_object = choice.data.orange_object
-            choice.data.right_value = choice.data.blue_value
-            choice.data.right_object = choice.data.blue_object
+            left_stim = "stimuli/orange/object" + temp_data.orange_object + ".jpg"
+            right_stim =  "stimuli/blue/object" + temp_data.blue_object + ".jpg"
+            temp_data.left_value = temp_data.orange_value
+            temp_data.left_object = temp_data.orange_object
+            temp_data.right_value = temp_data.blue_value
+            temp_data.right_object = temp_data.blue_object
         }
         choice.stimulus = "<div style='width: 800px;'>" +
             "<div style='float: left;'><img src='" + left_stim + "'></img></div>" +
@@ -491,6 +499,11 @@ var choice = {
             "</div>"
     },
     on_finish: function(data) {
+
+        // first, add all stuff from temp_data to the current trial data
+        for (const [key, value] of Object.entries(temp_data)) {
+            data[key] = value
+        }
 
         if (['ArrowLeft','ArrowRight'].includes(data.response)) {
             
@@ -521,10 +534,10 @@ var choice = {
                     data.outcome = data.orange_value
                 }
             }
-            data.lucky_chosen = + data.deck_chosen == data.lucky_deck
+            data.lucky_chosen = + (data.deck_chosen == data.lucky_deck)
 
             if (data.old_trial == 1 && ['blue','orange'].includes(data.deck_chosen)) {
-                data.old_chosen = + data.deck_chosen == data.old_deck
+                data.old_chosen = + (data.deck_chosen == data.old_deck)
                 data.optimal_old_choice = + ( (data.old_chosen==0 && data.old_value < 0.5 ) || (data.old_chosen==1 && data.old_value>0.5) )
             }
             
@@ -553,15 +566,12 @@ var choice = {
 var choice_confirmation = {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: function () {
-        if (jsPsych.data.get().last(1).values()[0].deck_chosen == "no_response") {
-            return '' // 0 trial duration anyways, just skip 
-        } else {
-            if (jsPsych.data.get().last(1).values()[0].left_chosen == 1) {
-                document.body.style.background = "url('stimuli/blank_confirmation_left.jpg') no-repeat center center";
-            } else {
-                document.body.style.background = "url('stimuli/blank_confirmation_right.jpg') no-repeat center center";
-            }
-        }
+        var resp = jsPsych.data.get().last(1).values()[0].response
+        if (resp == "ArrowLeft") {
+            document.body.style.background = "url('stimuli/blank_confirmation_left.jpg') no-repeat center center";
+        } else if (resp == "ArrowRight") {
+            document.body.style.background = "url('stimuli/blank_confirmation_right.jpg') no-repeat center center";
+        } 
         return jsPsych.data.get().last(1).values()[0].stimulus;
     },
     choices: [],
@@ -586,12 +596,11 @@ var feedback = {
         var left_chosen = jsPsych.data.get().last(2).values()[0].left_chosen;
         var stim = jsPsych.data.get().last(2).values()[0].stimulus;
         var choice = jsPsych.data.get().last(2).values()[0].deck_chosen;
-        var blue_left = jsPsych.data.get().last(2).values()[0].blue_left;
 
-        if (blue_left) {
+        if (deck_locs.blue=='left') {
             leftImg = "blue/";
             rightImg = "orange/";
-        } else if (!blue_left) {
+        } else {
             leftImg = "orange/";
             rightImg = "blue/";
         }
@@ -677,7 +686,7 @@ var main_task_procedure = {
 /*** 5. Debrief & finishing ***/
 
 var debrief_block = {
-    type: "html-button-response",
+    type: jsPsychHtmlButtonResponse,
     stimulus: function () {
         
         var feedback_trials = jsPsych.data.get().filter({ trial_type: 'feedback' });
@@ -726,18 +735,25 @@ var end_screen = {
     }
 }
 
+const save_data = {
+    type: jsPsychPipe,
+    action: "save",
+    experiment_id: "TJB5utBxDQPm",
+    filename: filename,
+    data_string: ()=>jsPsych.data.get().csv()
+};
 
 
 /*** 6. Populate timeline and run experiment ***/
 
 // preload images
 images = [
-    'stimuli/online_consent.pdf',
-    'stimuli/example-choice.png',
-    'stimuli/example-feedback.png',
-    'stimuli/example-trial.png',
-    'stimuli/example-deck-values.png',
-    'stimuli/example-deck-luck.png',
+    'stimuli/online_consent.png',
+    'stimuli/examples/example-choice.png',
+    'stimuli/examples/example-feedback.png',
+    'stimuli/examples/example-old-card.png',
+    'stimuli/examples/example-deck-values.png',
+    'stimuli/examples/example-deck-luck.png',
     'stimuli/blank_confirmation_left.jpg',
     'stimuli/blank_confirmation_right.jpg',
     'stimuli/blank_background.jpg'
@@ -766,12 +782,19 @@ var timeline = [];
 if (params.local) {
     timeline.push(local_alert)
 }
-timeline.push(browser_check, preload_images)
-timeline.push(welcome_fullscreen, instructions)
-// timeline.push(comprehension_check)
-timeline.push(practice_procedure)
-timeline.push(main_task_procedure)
-timeline.push(debrief_block, fullscreen_close, end_screen)
-
+timeline.push(
+    browser_check, 
+    preload_images, 
+    welcome_fullscreen, 
+    instructions,
+    //comprehension_check,
+    practice_procedure,
+    post_practice,
+    main_task_procedure,
+    debrief_block,
+    save_data,
+    fullscreen_close,
+    end_screen
+)
 jsPsych.run(timeline)
 
