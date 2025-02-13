@@ -14,7 +14,6 @@ const subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID');
 const study_id = jsPsych.data.getURLVariable('STUDY_ID');
 const session_id = jsPsych.data.getURLVariable('SESSION_ID');
 console.log('Prolific info:', subject_id, study_id, session_id)
-const filename = `${experiment_id}_${study_id}_${subject_id}_${session_id}.csv`
 
 jsPsych.data.addProperties({
     experiment_id: experiment_id, //unique ID
@@ -29,6 +28,7 @@ if (subject_id == undefined) {
     params.iteration = 'testing'
 }
 console.log('Iteration: ', params.iteration)
+const filename = `${params.iteration}_${experiment_id}.csv`
 
 /*
     1. Initial checks
@@ -260,6 +260,7 @@ var post_practice = {
         trial_number = 0
         block_number = 0
         trials_since_reversal = 0
+        old_trial_tracking = reset_old_trial_tracking()
         outcomes = generate_outcomes() // new outcomes
         reversals = generate_block_reversals() // set new reversals
         [deck_locs.blue, deck_locs.orange] = [deck_locs.orange, deck_locs.blue] // reverse deck locations
@@ -296,17 +297,22 @@ for (var i = 1; i <= 665; i++) {
 var old_object_nums_already_repeated = []
 
 // keep track of data for the purpose of creating old trials
-var old_trial_tracking = []
-for (var i = 1; i <= params.n_trials_total; i++) {
-    old_trial_tracking[i] = {
-        'trial_number': NaN,
-        'object': 'none',
-        'value': NaN,
-        'deck': 'none',
-        'luck': 'none',
-        'shown_twice': false,
-    };
+
+function reset_old_trial_tracking() {
+    var old_trial_tracking = []
+    for (var i = 0; i < params.n_trials_total; i++) {
+        old_trial_tracking[i] = {
+            'trial_number': NaN,
+            'object': 'none',
+            'value': NaN,
+            'deck': 'none',
+            'luck': 'none',
+            'shown_twice': false,
+        };
+    }
+    return old_trial_tracking
 }
+var old_trial_tracking = reset_old_trial_tracking()
 
 // keep track of average outcomes to keep values from inflating
 var all_outcomes = []
@@ -330,7 +336,6 @@ var choice = {
     response_ends_trial: true,
     on_start: function (choice) {
         // all of this is stored in temp_data and then reloaded in the on_finish because accessing choice.data doesn't work
-        trial_number += 1;
         temp_data.trial_type = 'choice';
         temp_data.trial_number = trial_number;
         temp_data.block_number = block_number;
@@ -448,7 +453,6 @@ var choice = {
                     temp_data.blue_object = new_object
                     temp_data.blue_value = outcomes[deck_lucks['blue']].shift()
                 }
-
             } else {
                 // failed to find old object, treat as a new/new trial -- this should be rare!!!!
                 console.log('Failed to find old object, trial ' + trial_number)
@@ -558,7 +562,10 @@ var choice = {
         } else {
             old_trial_tracking[trial_number]['luck'] = "unlucky";
         }
+        // update trial number
+        trial_number += 1;
     }
+
 };
 
 
@@ -647,7 +654,12 @@ var feedback = {
     },
     choices: [],
     trial_duration: params.feedback_time,
-    data: { trial_type: 'feedback' }
+    data: function () {
+        return {
+            trial_type: 'feedback',
+            outcome: jsPsych.data.get().last(2).values()[0].outcome
+        }
+    }
 };
 
 var block_break = {
@@ -691,7 +703,7 @@ var debrief_block = {
         
         var feedback_trials = jsPsych.data.get().filter({ trial_type: 'feedback' });
         bonus = feedback_trials.select('outcome').sum() * params.bonus_downweighting, 2
-        bonus = max(bonus, params.max_bonus).toFixed(2)
+        bonus = Math.min(bonus, params.max_bonus).toFixed(2)
 
         var choice_trials = jsPsych.data.get().filter({ trial_type: 'choice' });
         var choice_trials_old = choice_trials.filter({old_trial: 1})
@@ -787,7 +799,7 @@ timeline.push(
     preload_images, 
     welcome_fullscreen, 
     instructions,
-    //comprehension_check,
+    // comprehension_check,
     practice_procedure,
     post_practice,
     main_task_procedure,
