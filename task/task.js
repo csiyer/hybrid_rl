@@ -809,4 +809,3 @@ timeline.push(
     end_screen
 )
 jsPsych.run(timeline)
-

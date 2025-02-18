@@ -1,4 +1,5 @@
-fsf=csi_model1.fsf
+fsf=csi_model2.fsf # CHANGE THIS!
+
 for i in /Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/TCST0*/hybrid_r?/preproc_6mm_6del_100s_mc.feat/filtered_func_data.nii.gz; 
 	do 
 	s=$(echo $i | cut -c72-73); 
