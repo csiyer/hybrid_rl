@@ -274,7 +274,7 @@ def plot_lingering_modes_iti(data, from_choice_or_fb = 'choice', oldnew_vs_newne
         labels = ['preceding_newnew', 'prec_optimal_memory']
     else:
         # compare old/new trials whose preceding trial is old/new successful vs old/new unsuccessful
-        data = data[(data.OldT==1) & (data.prec_obj_memory.isin([-1,1]) )] 
+        data = data[(data.OldT==1) & (data.prec_obj_memory.isin([-1,1]) )] # this implicitly limits to only consecutive old/new trials 
         labels = ['preceding_error_memory', 'prec_optimal_memory']
 
     ## NOW NEW STUFF
@@ -332,7 +332,7 @@ def add_isi_to_data(data, save=True):
         for run in data.Run.unique():
 
             pfile = scipy.io.loadmat(beh_path + f'/{sub:02d}_output/Performance_5.mat')
-            start_of_choice = pfile['Performance']['time'][0,0]['startChoice'][0,0][0]
+            start_of_choice = pfile['Performance']['time'][0,0]['startChoice'][0,0][0] # startTrial is start of choice period, startChoice is the response time
             start_of_isi = pfile['Performance']['time'][0,0]['startISI'][0,0][0]
             run_mask = pfile['Performance']['cond'][0,0]['Run'][0,0][0] == run
             
@@ -347,10 +347,12 @@ def add_isi_to_data(data, save=True):
             start_of_isi = start_of_isi[run_mask]
 
             # difference between onset of choice and onset of previous choice
-            data.iti_fromchoice[(data.Sub==sub)&(data.Run==run)] = np.hstack([[np.nan], np.diff(start_of_choice)]) 
-            
+            data.loc[(data.Sub==sub)&(data.Run==run), 'iti_fromchoice'] = np.hstack([[np.nan], np.diff(start_of_choice)]) 
+        
             # difference between onset of choice and offset of previous fb (start of true ITI) 
-            data.iti_fromfb[(data.Sub==sub)&(data.Run==run)] = np.hstack([[np.nan], start_of_choice[1:]-start_of_isi[:-1]])
+            data.loc[(data.Sub==sub)&(data.Run==run), 'iti_fromfb'] = np.hstack([[np.nan], start_of_choice[1:]-start_of_isi[:-1]])
+
     if save:
         data.to_csv('data/hybrid_data.csv',index=False)
+
     return data
