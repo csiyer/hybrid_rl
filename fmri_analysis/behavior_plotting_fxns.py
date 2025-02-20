@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
+from scipy.stats import linregress
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -194,7 +195,7 @@ def plot_separate_subjects(data, x_cols, y_cols, x_texts, y_texts, logistic_fit,
     plt.show()
 
 
-def plot_lingering_modes(data, consecutive_pairs = False, oldnew_vs_newnew=False, **kwargs):
+def plot_lingering_modes(data, oldnew_vs_newnew=False, **kwargs):
     # first, assign a trial as having previous object memory or not (old trial and optimal choice)
     data = data.copy()
     data["prec_obj_memory"] = data.apply(
@@ -207,14 +208,13 @@ def plot_lingering_modes(data, consecutive_pairs = False, oldnew_vs_newnew=False
     )
     data["prec_obj_memory"] = data["prec_obj_memory"].shift(1) # shift to the last trial
 
-    if consecutive_pairs: # only consider old/new trials immediately preceded by old/new trial
-        data = data[(data["OldT"] == 1) & (data["OldT"].shift(1) == 1)]
-
     if oldnew_vs_newnew: # compare old/new trials whose preceding trial is old/new successful vs new/new
-        data = data[data.prec_obj_memory.isin([0,1])] 
+        data = data[(data.OldT==1) & (data.prec_obj_memory.isin([0,1]) )] 
+        labels = ['preceding_newnew', 'prec_optimal_memory']
     else:
         # compare old/new trials whose preceding trial is old/new successful vs old/new unsuccessful
-        data = data[data.prec_obj_memory.isin([-1,1])] 
+        data = data[(data.OldT==1) & (data.prec_obj_memory.isin([-1,1]) )] 
+        labels = ['preceding_error_memory', 'prec_optimal_memory']
     
     f, axs = plt.subplots(1, 4, figsize=(12, 3), sharey=False)
     if 'title' in kwargs: f.suptitle(kwargs['title'])
@@ -229,14 +229,14 @@ def plot_lingering_modes(data, consecutive_pairs = False, oldnew_vs_newnew=False
         
         for j,(key, group) in enumerate(group_data.groupby('prec_obj_memory')):
             color = ['blue', 'green'][j]
-            label = ['prec obj no mem', 'prec obj mem'][j]
-            axs[i*2].plot(group[x_col], group['mean'], color=color, label=label)
+            axs[i*2].plot(group[x_col], group['mean'], color=color, label=labels[j])
             axs[i*2].fill_between(group[x_col], 
                                   (group['mean'] + group['sem']), (group['mean'] - group['sem']),
                                   color='gray', alpha=0.5)
-
-            percent_increase = (group['mean'].iloc[-1] - group['mean'].iloc[0])
-            axs[i*2+1].bar(x=1-j, height= percent_increase, color=color, label=label)
+            
+            slope, _, _, _, _ = linregress([0,0.2,0.4,0.6,0.8,1.0], group['mean'])
+            # slope = (group['mean'].iloc[-1] - group['mean'].iloc[0])
+            axs[i*2+1].bar(x=1-j, height=slope, color=color, label=labels[j])
 
         axs[i*2].set_ylim(0.2,0.8)
         axs[i*2].set_title(title)
@@ -248,12 +248,109 @@ def plot_lingering_modes(data, consecutive_pairs = False, oldnew_vs_newnew=False
         axs[i*2+1].set_title(title)
         axs[i*2+1].set_xticks([0,1])
         axs[i*2+1].set_xticklabels(['mem', 'no mem'])
-        axs[i*2+1].set_xlabel(x_label)
-        axs[i*2+1].set_ylabel('proportion increase')
+        axs[i*2+1].set_xlabel('Preceding trial memory')
+        axs[i*2+1].set_ylabel('Slope of linear fit')
 
     plt.tight_layout()
     plt.show()
 
 
-def plot_reversal_inference(data):
+def plot_lingering_modes_iti(data, from_choice_or_fb = 'choice', oldnew_vs_newnew=False, **kwargs):
+    #### SAME STUFF AS ABOVE
+    # first, assign a trial as having previous object memory or not (old trial and optimal choice)
     data = data.copy()
+    data["prec_obj_memory"] = data.apply(
+        lambda row: (
+            1 if row["OldT"] == 1 and row["OptObj"] == 1 else # used episodic memory
+            -1 if row["OldT"] == 1 and row["OptObj"] == 0 else # did not use episodic memory
+            0 # new/new trial
+        ),
+        axis=1
+    )
+    data["prec_obj_memory"] = data["prec_obj_memory"].shift(1) # shift to the last trial
+
+    if oldnew_vs_newnew: # compare old/new trials whose preceding trial is old/new successful vs new/new
+        data = data[(data.OldT==1) & (data.prec_obj_memory.isin([0,1]) )] 
+        labels = ['preceding_newnew', 'prec_optimal_memory']
+    else:
+        # compare old/new trials whose preceding trial is old/new successful vs old/new unsuccessful
+        data = data[(data.OldT==1) & (data.prec_obj_memory.isin([-1,1]) )] 
+        labels = ['preceding_error_memory', 'prec_optimal_memory']
+
+    ## NOW NEW STUFF
+    if from_choice_or_fb=='choice':
+        iti_helper_col = 'iti_fromchoice'
+    elif from_choice_or_fb=='fb':
+        iti_helper_col = 'iti_fromfb'
+    data = data[~pd.isna(data[iti_helper_col])]
+    data['iti_round'] = data[iti_helper_col].round(0) # round for easy binning
+    
+    f, axs = plt.subplots(1, 2, figsize=(12, 3), sharey=False)
+    if 'title' in kwargs: f.suptitle(kwargs['title'])
+
+    for i,(x_col, y_col, title) in enumerate(zip(['ObjPP', 'PP'], 
+                                                 ['OldObjC', 'StayResp'], 
+                                                 ['Object Use','Deck Use'])):
+        # first panel: object use, second panel deck use
+        group_data = data.groupby(['iti_round', 'prec_obj_memory', x_col])[y_col].mean().reset_index()
+        def compute_slope(group):
+            X = group[x_col].values
+            y = group[y_col].values
+            if len(X) > 1: 
+                return linregress(X, y).slope
+            return None
+        slopes_df = group_data.groupby(['iti_round', 'prec_obj_memory']).apply(compute_slope, include_groups=False).reset_index(name='slope')
+        slopes_mem = slopes_df[slopes_df['prec_obj_memory'] == 1]
+        slopes_nomem = slopes_df[slopes_df['prec_obj_memory'] != 1]
+
+        axs[i].scatter(slopes_nomem['iti_round'], slopes_nomem['slope'], color='blue', label=labels[0], alpha=0.7)
+        axs[i].scatter(slopes_mem['iti_round'], slopes_mem['slope'], color='green', label=labels[1], alpha=0.7)
+        axs[i].plot(slopes_nomem['iti_round'], slopes_nomem['slope'], color='blue', alpha=0.5)
+        axs[i].plot(slopes_mem['iti_round'], slopes_mem['slope'], color='green' , alpha=0.5)
+        
+
+        axs[i].set_xlabel(f'ITI (from {from_choice_or_fb})')
+        axs[i].set_ylabel(f'Slope of linear fit \n(x={x_col}, y={y_col})')
+        axs[i].set_title(title)
+        axs[i].legend()
+
+    plt.tight_layout()
+    plt.show()
+
+
+def add_isi_to_data(data, save=True):
+    # add ITI to data, assess mode effect by bin grouping
+    import os, scipy.io
+    beh_path = '/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior'
+    if not os.path.isdir(beh_path):
+        print('Behavioral files not found')
+        return 
+    
+    data['iti_fromfb'] = np.zeros(len(data))
+    data['iti_fromchoice'] = np.zeros(len(data))
+    for sub in data.Sub.unique():
+        for run in data.Run.unique():
+
+            pfile = scipy.io.loadmat(beh_path + f'/{sub:02d}_output/Performance_5.mat')
+            start_of_choice = pfile['Performance']['time'][0,0]['startChoice'][0,0][0]
+            start_of_isi = pfile['Performance']['time'][0,0]['startISI'][0,0][0]
+            run_mask = pfile['Performance']['cond'][0,0]['Run'][0,0][0] == run
+            
+            # fix one weird thing
+            if sub == 13:
+                resp = pfile['Performance']['choose'][0, 0]['resp'][0,0][0]
+                start_of_choice = start_of_choice[resp != 0]
+                start_of_isi = start_of_isi[resp != 0]
+                run_mask = run_mask[resp != 0]
+
+            start_of_choice = start_of_choice[run_mask]
+            start_of_isi = start_of_isi[run_mask]
+
+            # difference between onset of choice and onset of previous choice
+            data.iti_fromchoice[(data.Sub==sub)&(data.Run==run)] = np.hstack([[np.nan], np.diff(start_of_choice)]) 
+            
+            # difference between onset of choice and offset of previous fb (start of true ITI) 
+            data.iti_fromfb[(data.Sub==sub)&(data.Run==run)] = np.hstack([[np.nan], start_of_choice[1:]-start_of_isi[:-1]])
+    if save:
+        data.to_csv('data/hybrid_data.csv',index=False)
+    return data

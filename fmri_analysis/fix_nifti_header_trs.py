@@ -4,10 +4,11 @@ import glob
 # change TR in nifti headers which for some reason is 1.0 instead of 2.0
 root = '/Volumes/shohamy-locker/chris/hybrid_mri_JN/rawdata/'
 
-def set_tr(img, tr):
+def set_tr(img, tr=2.0, xyz='mm',t='sec'):
     header = img.header.copy()
     zooms = header.get_zooms()[:3] + (tr,)
     header.set_zooms(zooms)
+    header.set_xyzt_units(xyz='mm', t='sec')
     return img.__class__(img.get_fdata().copy(), img.affine, header)
 
 niifiles = glob.glob(root + 'sub-*/func/*.nii')
