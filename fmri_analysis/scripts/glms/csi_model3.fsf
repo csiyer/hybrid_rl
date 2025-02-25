@@ -30,7 +30,7 @@ set fmri(featwatcher_yn) 0
 set fmri(sscleanup_yn) 0
 
 # Output directory
-set fmri(outputdir) "/Volumes/shohamy-locker/chris/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/csi_model3.feat"
+set fmri(outputdir) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/csi_model3.feat"
 
 # TR(s)
 set fmri(tr) 2.000000
@@ -153,8 +153,8 @@ set fmri(mixed_yn) 2
 set fmri(randomisePermutations) 5000
 
 # Number of EVs
-set fmri(evs_orig) 11
-set fmri(evs_real) 22
+set fmri(evs_orig) 12
+set fmri(evs_real) 24
 set fmri(evs_vox) 0
 
 # Number of contrasts
@@ -282,7 +282,7 @@ set feat_files(1) "XXINXX"
 set fmri(confoundevs) 1
 
 # Confound EVs text file for analysis 1
-set confoundev_files(1) "/Volumes/shohamy-locker/chris/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/preproc_6mm_6del_100s_mc.feat/mc/extended_confs_24par.txt"
+set confoundev_files(1) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/preproc_6mm_6del_100s_mc.feat/mc/extended_confs_24par.txt"
 
 # EV 1 title
 set fmri(evtitle1) "choice"
@@ -317,7 +317,7 @@ set fmri(tempfilt_yn1) 1
 set fmri(deriv_yn1) 1
 
 # Custom EV file (EV 1)
-set fmri(custom1) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/choice_runXXRUNXX.txt"
+set fmri(custom1) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_runXXRUNXX.txt"
 
 # Orthogonalise EV 1 wrt EV 0
 set fmri(ortho1.0) 0
@@ -355,6 +355,9 @@ set fmri(ortho1.10) 0
 # Orthogonalise EV 1 wrt EV 11
 set fmri(ortho1.11) 0
 
+# Orthogonalise EV 1 wrt EV 12
+set fmri(ortho1.12) 0
+
 # EV 2 title
 set fmri(evtitle2) "fb"
 
@@ -388,7 +391,7 @@ set fmri(tempfilt_yn2) 1
 set fmri(deriv_yn2) 1
 
 # Custom EV file (EV 2)
-set fmri(custom2) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/FB_runXXRUNXX.txt"
+set fmri(custom2) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/FB_runXXRUNXX.txt"
 
 # Orthogonalise EV 2 wrt EV 0
 set fmri(ortho2.0) 0
@@ -426,6 +429,9 @@ set fmri(ortho2.10) 0
 # Orthogonalise EV 2 wrt EV 11
 set fmri(ortho2.11) 0
 
+# Orthogonalise EV 2 wrt EV 12
+set fmri(ortho2.12) 0
+
 # EV 3 title
 set fmri(evtitle3) "fb_newt"
 
@@ -459,7 +465,7 @@ set fmri(tempfilt_yn3) 1
 set fmri(deriv_yn3) 1
 
 # Custom EV file (EV 3)
-set fmri(custom3) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/FB_noc_runXXRUNXX.txt"
+set fmri(custom3) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/FB_noc_runXXRUNXX.txt"
 
 # Orthogonalise EV 3 wrt EV 0
 set fmri(ortho3.0) 0
@@ -497,6 +503,9 @@ set fmri(ortho3.10) 0
 # Orthogonalise EV 3 wrt EV 11
 set fmri(ortho3.11) 0
 
+# Orthogonalise EV 3 wrt EV 12
+set fmri(ortho3.12) 0
+
 # EV 4 title
 set fmri(evtitle4) "fb_pay"
 
@@ -530,7 +539,7 @@ set fmri(tempfilt_yn4) 1
 set fmri(deriv_yn4) 1
 
 # Custom EV file (EV 4)
-set fmri(custom4) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/FB_pay_runXXRUNXX.txt"
+set fmri(custom4) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/FB_pay_runXXRUNXX.txt"
 
 # Orthogonalise EV 4 wrt EV 0
 set fmri(ortho4.0) 0
@@ -568,6 +577,9 @@ set fmri(ortho4.10) 0
 # Orthogonalise EV 4 wrt EV 11
 set fmri(ortho4.11) 0
 
+# Orthogonalise EV 4 wrt EV 12
+set fmri(ortho4.12) 0
+
 # EV 5 title
 set fmri(evtitle5) "fb_ep_lik_enc"
 
@@ -601,7 +613,7 @@ set fmri(tempfilt_yn5) 1
 set fmri(deriv_yn5) 1
 
 # Custom EV file (EV 5)
-set fmri(custom5) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/FB_eplik_enc_runXXRUNXX.txt"
+set fmri(custom5) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/FB_eplik_enc_runXXRUNXX.txt"
 
 # Orthogonalise EV 5 wrt EV 0
 set fmri(ortho5.0) 0
@@ -639,6 +651,9 @@ set fmri(ortho5.10) 0
 # Orthogonalise EV 5 wrt EV 11
 set fmri(ortho5.11) 0
 
+# Orthogonalise EV 5 wrt EV 12
+set fmri(ortho5.12) 0
+
 # EV 6 title
 set fmri(evtitle6) "revt"
 
@@ -672,7 +687,7 @@ set fmri(tempfilt_yn6) 1
 set fmri(deriv_yn6) 1
 
 # Custom EV file (EV 6)
-set fmri(custom6) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/fb_revT_runXXRUNXX.txt"
+set fmri(custom6) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/fb_revT_runXXRUNXX.txt"
 
 # Orthogonalise EV 6 wrt EV 0
 set fmri(ortho6.0) 0
@@ -710,6 +725,9 @@ set fmri(ortho6.10) 0
 # Orthogonalise EV 6 wrt EV 11
 set fmri(ortho6.11) 0
 
+# Orthogonalise EV 6 wrt EV 12
+set fmri(ortho6.12) 0
+
 # EV 7 title
 set fmri(evtitle7) "inval"
 
@@ -743,7 +761,7 @@ set fmri(tempfilt_yn7) 1
 set fmri(deriv_yn7) 1
 
 # Custom EV file (EV 7)
-set fmri(custom7) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/inval_runXXRUNXX.txt"
+set fmri(custom7) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/inval_runXXRUNXX.txt"
 
 # Orthogonalise EV 7 wrt EV 0
 set fmri(ortho7.0) 0
@@ -780,6 +798,9 @@ set fmri(ortho7.10) 0
 
 # Orthogonalise EV 7 wrt EV 11
 set fmri(ortho7.11) 0
+
+# Orthogonalise EV 7 wrt EV 12
+set fmri(ortho7.12) 0
 
 # EV 8 title
 set fmri(evtitle8) "fb_ep_lik_encxfb_pay"
@@ -890,6 +911,9 @@ set fmri(ortho8.10) 0
 
 # Orthogonalise EV 8 wrt EV 11
 set fmri(ortho8.11) 0
+
+# Orthogonalise EV 8 wrt EV 12
+set fmri(ortho8.12) 0
 
 # EV 9 title
 set fmri(evtitle9) "fb_ep_lik_encxrevt"
@@ -1006,6 +1030,9 @@ set fmri(ortho9.10) 0
 
 # Orthogonalise EV 9 wrt EV 11
 set fmri(ortho9.11) 0
+
+# Orthogonalise EV 9 wrt EV 12
+set fmri(ortho9.12) 0
 
 # EV 10 title
 set fmri(evtitle10) "fb_payxrevt"
@@ -1128,6 +1155,9 @@ set fmri(ortho10.10) 0
 
 # Orthogonalise EV 10 wrt EV 11
 set fmri(ortho10.11) 0
+
+# Orthogonalise EV 10 wrt EV 12
+set fmri(ortho10.12) 0
 
 # EV 11 title
 set fmri(evtitle11) "fb_ep_lik_encxfb_payxrevt"
@@ -1257,6 +1287,89 @@ set fmri(ortho11.10) 0
 # Orthogonalise EV 11 wrt EV 11
 set fmri(ortho11.11) 0
 
+# Orthogonalise EV 11 wrt EV 12
+set fmri(ortho11.12) 0
+
+# EV 12 title
+set fmri(evtitle12) "rt"
+
+# Basic waveform shape (EV 12)
+# 0 : Square
+# 1 : Sinusoid
+# 2 : Custom (1 entry per volume)
+# 3 : Custom (3 column format)
+# 4 : Interaction
+# 10 : Empty (all zeros)
+set fmri(shape12) 3
+
+# Convolution (EV 12)
+# 0 : None
+# 1 : Gaussian
+# 2 : Gamma
+# 3 : Double-Gamma HRF
+# 4 : Gamma basis functions
+# 5 : Sine basis functions
+# 6 : FIR basis functions
+# 8 : Alternate Double-Gamma
+set fmri(convolve12) 2
+
+# Convolve phase (EV 12)
+set fmri(convolve_phase12) 0
+
+# Apply temporal filtering (EV 12)
+set fmri(tempfilt_yn12) 1
+
+# Add temporal derivative (EV 12)
+set fmri(deriv_yn12) 1
+
+# Custom EV file (EV 12)
+set fmri(custom12) "/burg/dslab/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/rt_runXXRUNXX.txt"
+
+# Gamma sigma (EV 12)
+set fmri(gammasigma12) 3
+
+# Gamma delay (EV 12)
+set fmri(gammadelay12) 6
+
+# Orthogonalise EV 12 wrt EV 0
+set fmri(ortho12.0) 0
+
+# Orthogonalise EV 12 wrt EV 1
+set fmri(ortho12.1) 0
+
+# Orthogonalise EV 12 wrt EV 2
+set fmri(ortho12.2) 0
+
+# Orthogonalise EV 12 wrt EV 3
+set fmri(ortho12.3) 0
+
+# Orthogonalise EV 12 wrt EV 4
+set fmri(ortho12.4) 0
+
+# Orthogonalise EV 12 wrt EV 5
+set fmri(ortho12.5) 0
+
+# Orthogonalise EV 12 wrt EV 6
+set fmri(ortho12.6) 0
+
+# Orthogonalise EV 12 wrt EV 7
+set fmri(ortho12.7) 0
+
+# Orthogonalise EV 12 wrt EV 8
+set fmri(ortho12.8) 0
+
+# Orthogonalise EV 12 wrt EV 9
+set fmri(ortho12.9) 0
+
+# Orthogonalise EV 12 wrt EV 10
+set fmri(ortho12.10) 0
+
+# Orthogonalise EV 12 wrt EV 11
+set fmri(ortho12.11) 0
+
+# Orthogonalise EV 12 wrt EV 12
+set fmri(ortho12.12) 0
+
 # Contrast & F-tests mode
 # real : control real EVs
 # orig : control original EVs
@@ -1335,6 +1448,12 @@ set fmri(con_real1.21) 0
 # Real contrast_real vector 1 element 22
 set fmri(con_real1.22) 0
 
+# Real contrast_real vector 1 element 23
+set fmri(con_real1.23) 0
+
+# Real contrast_real vector 1 element 24
+set fmri(con_real1.24) 0
+
 # Display images for contrast_real 2
 set fmri(conpic_real.2) 1
 
@@ -1406,6 +1525,12 @@ set fmri(con_real2.21) 0
 
 # Real contrast_real vector 2 element 22
 set fmri(con_real2.22) 0
+
+# Real contrast_real vector 2 element 23
+set fmri(con_real2.23) 0
+
+# Real contrast_real vector 2 element 24
+set fmri(con_real2.24) 0
 
 # Display images for contrast_real 3
 set fmri(conpic_real.3) 1
@@ -1479,6 +1604,12 @@ set fmri(con_real3.21) 0
 # Real contrast_real vector 3 element 22
 set fmri(con_real3.22) 0
 
+# Real contrast_real vector 3 element 23
+set fmri(con_real3.23) 0
+
+# Real contrast_real vector 3 element 24
+set fmri(con_real3.24) 0
+
 # Display images for contrast_real 4
 set fmri(conpic_real.4) 1
 
@@ -1550,6 +1681,12 @@ set fmri(con_real4.21) 0
 
 # Real contrast_real vector 4 element 22
 set fmri(con_real4.22) 0
+
+# Real contrast_real vector 4 element 23
+set fmri(con_real4.23) 0
+
+# Real contrast_real vector 4 element 24
+set fmri(con_real4.24) 0
 
 # Display images for contrast_real 5
 set fmri(conpic_real.5) 1
@@ -1623,6 +1760,12 @@ set fmri(con_real5.21) 0
 # Real contrast_real vector 5 element 22
 set fmri(con_real5.22) 0
 
+# Real contrast_real vector 5 element 23
+set fmri(con_real5.23) 0
+
+# Real contrast_real vector 5 element 24
+set fmri(con_real5.24) 0
+
 # Display images for contrast_real 6
 set fmri(conpic_real.6) 1
 
@@ -1694,6 +1837,12 @@ set fmri(con_real6.21) 0
 
 # Real contrast_real vector 6 element 22
 set fmri(con_real6.22) 0
+
+# Real contrast_real vector 6 element 23
+set fmri(con_real6.23) 0
+
+# Real contrast_real vector 6 element 24
+set fmri(con_real6.24) 0
 
 # Display images for contrast_real 7
 set fmri(conpic_real.7) 1
@@ -1767,6 +1916,12 @@ set fmri(con_real7.21) 1.0
 # Real contrast_real vector 7 element 22
 set fmri(con_real7.22) 0
 
+# Real contrast_real vector 7 element 23
+set fmri(con_real7.23) 0
+
+# Real contrast_real vector 7 element 24
+set fmri(con_real7.24) 0
+
 # Display images for contrast_orig 1
 set fmri(conpic_orig.1) 1
 
@@ -1805,6 +1960,9 @@ set fmri(con_orig1.10) 0
 
 # Real contrast_orig vector 1 element 11
 set fmri(con_orig1.11) 0
+
+# Real contrast_orig vector 1 element 12
+set fmri(con_orig1.12) 0
 
 # Display images for contrast_orig 2
 set fmri(conpic_orig.2) 1
@@ -1845,6 +2003,9 @@ set fmri(con_orig2.10) 0
 # Real contrast_orig vector 2 element 11
 set fmri(con_orig2.11) 0
 
+# Real contrast_orig vector 2 element 12
+set fmri(con_orig2.12) 0
+
 # Display images for contrast_orig 3
 set fmri(conpic_orig.3) 1
 
@@ -1883,6 +2044,9 @@ set fmri(con_orig3.10) 0
 
 # Real contrast_orig vector 3 element 11
 set fmri(con_orig3.11) 0
+
+# Real contrast_orig vector 3 element 12
+set fmri(con_orig3.12) 0
 
 # Display images for contrast_orig 4
 set fmri(conpic_orig.4) 1
@@ -1923,6 +2087,9 @@ set fmri(con_orig4.10) 0
 # Real contrast_orig vector 4 element 11
 set fmri(con_orig4.11) 0
 
+# Real contrast_orig vector 4 element 12
+set fmri(con_orig4.12) 0
+
 # Display images for contrast_orig 5
 set fmri(conpic_orig.5) 1
 
@@ -1961,6 +2128,9 @@ set fmri(con_orig5.10) 0
 
 # Real contrast_orig vector 5 element 11
 set fmri(con_orig5.11) 0
+
+# Real contrast_orig vector 5 element 12
+set fmri(con_orig5.12) 0
 
 # Display images for contrast_orig 6
 set fmri(conpic_orig.6) 1
@@ -2001,6 +2171,9 @@ set fmri(con_orig6.10) 1.0
 # Real contrast_orig vector 6 element 11
 set fmri(con_orig6.11) 0
 
+# Real contrast_orig vector 6 element 12
+set fmri(con_orig6.12) 0
+
 # Display images for contrast_orig 7
 set fmri(conpic_orig.7) 1
 
@@ -2039,6 +2212,9 @@ set fmri(con_orig7.10) 0
 
 # Real contrast_orig vector 7 element 11
 set fmri(con_orig7.11) 1.0
+
+# Real contrast_orig vector 7 element 12
+set fmri(con_orig7.12) 0
 
 # Contrast masking - use >0 instead of thresholding?
 set fmri(conmask_zerothresh_yn) 0
