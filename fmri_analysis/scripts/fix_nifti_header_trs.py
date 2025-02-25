@@ -1,3 +1,5 @@
+"""only relevant for running fmriprep"""
+
 import nibabel as nib
 import glob
 

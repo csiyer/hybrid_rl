@@ -315,7 +315,7 @@ set fmri(tempfilt_yn1) 1
 set fmri(deriv_yn1) 1
 
 # Custom EV file (EV 1)
-set fmri(custom1) "/Volumes/shohamy-locker/chris/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_runXXRUNXX.txt"
+set fmri(custom1) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/choice_runXXRUNXX.txt"
 
 # Orthogonalise EV 1 wrt EV 0
 set fmri(ortho1.0) 0
@@ -374,7 +374,7 @@ set fmri(tempfilt_yn2) 1
 set fmri(deriv_yn2) 1
 
 # Custom EV file (EV 2)
-set fmri(custom2) "/Volumes/shohamy-locker/chris/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_inclik_runXXRUNXX.txt"
+set fmri(custom2) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/choice_inclik_runXXRUNXX.txt"
 
 # Orthogonalise EV 2 wrt EV 0
 set fmri(ortho2.0) 0
@@ -433,7 +433,7 @@ set fmri(tempfilt_yn3) 1
 set fmri(deriv_yn3) 1
 
 # Custom EV file (EV 3)
-set fmri(custom3) "/Volumes/shohamy-locker/chris/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_eplik_runXXRUNXX.txt"
+set fmri(custom3) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/choice_eplik_runXXRUNXX.txt"
 
 # Orthogonalise EV 3 wrt EV 0
 set fmri(ortho3.0) 0
@@ -492,7 +492,7 @@ set fmri(tempfilt_yn4) 1
 set fmri(deriv_yn4) 1
 
 # Custom EV file (EV 4)
-set fmri(custom4) "/Volumes/shohamy-locker/chris/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_oldt_runXXRUNXX.txt"
+set fmri(custom4) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/choice_oldt_runXXRUNXX.txt"
 
 # Orthogonalise EV 4 wrt EV 0
 set fmri(ortho4.0) 0
@@ -551,7 +551,7 @@ set fmri(tempfilt_yn5) 1
 set fmri(deriv_yn5) 1
 
 # Custom EV file (EV 5)
-set fmri(custom5) "/Volumes/shohamy-locker/chris/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/FB_runXXRUNXX.txt"
+set fmri(custom5) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/FB_runXXRUNXX.txt"
 
 # Orthogonalise EV 5 wrt EV 0
 set fmri(ortho5.0) 0
@@ -610,7 +610,7 @@ set fmri(tempfilt_yn6) 1
 set fmri(deriv_yn6) 1
 
 # Custom EV file (EV 6)
-set fmri(custom6) "/Volumes/shohamy-locker/chris/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/FB_eplik_enc_runXXRUNXX.txt"
+set fmri(custom6) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/FB_eplik_enc_runXXRUNXX.txt"
 
 # Orthogonalise EV 6 wrt EV 0
 set fmri(ortho6.0) 0
@@ -669,7 +669,7 @@ set fmri(tempfilt_yn7) 1
 set fmri(deriv_yn7) 1
 
 # Custom EV file (EV 7)
-set fmri(custom7) "/Volumes/shohamy-locker/chris/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/inval_runXXRUNXX.txt"
+set fmri(custom7) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/inval_runXXRUNXX.txt"
 
 # Orthogonalise EV 7 wrt EV 0
 set fmri(ortho7.0) 0
