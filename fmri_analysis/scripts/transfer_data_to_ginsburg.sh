@@ -1,6 +1,7 @@
-rsync -zhav --files-from='fmri_analysis/scripts/files_to_ginsburg.txt' \
+rsync -zhav --prune-empty-dirs --ignore-existing \
+    --files-from='fmri_analysis/scripts/files_to_ginsburg.txt' \
     /Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/ \
-    csi2108@ginsburg.rcs.columbia.edu:/burg/home/csi2108/hybrid_mri_CSI
+    csi2108@ginsburg.rcs.columbia.edu:/burg/dslab/users/csi2108/hybrid_mri_CSI
 
 # rsync -zhav --progress --ignore-existing \
 #     /Users/chrisiyer/_Current/lab/code/hybrid_rl/fmri_analysis/scripts/ \

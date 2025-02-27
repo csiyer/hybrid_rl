@@ -539,7 +539,7 @@ set fmri(tempfilt_yn4) 1
 set fmri(deriv_yn4) 1
 
 # Custom EV file (EV 4)
-set fmri(custom4) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/FB_pay_runXXRUNXX.txt"
+set fmri(custom4) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/FBpay_runXXRUNXX.txt"
 
 # Orthogonalise EV 4 wrt EV 0
 set fmri(ortho4.0) 0
@@ -1323,7 +1323,7 @@ set fmri(tempfilt_yn12) 1
 set fmri(deriv_yn12) 1
 
 # Custom EV file (EV 12)
-set fmri(custom12) "/burg/dslab/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/rt_runXXRUNXX.txt"
+set fmri(custom12) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/rt_runXXRUNXX.txt"
 
 # Gamma sigma (EV 12)
 set fmri(gammasigma12) 3

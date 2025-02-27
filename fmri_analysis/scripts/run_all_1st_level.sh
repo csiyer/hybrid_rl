@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --account=dslab
-#SBATCH --job-name=glm_subject
-#SBATCH --output=glm_subj_%A_%a.out
-#SBATCH --error=glm_subj_%A_%a.err
+#SBATCH --job-name=csi_fmri
+#SBATCH --output=logs/%A_%a.out
+#SBATCH --error=logs/%A_%a.err
 #SBATCH --time=24:00:00
 #SBATCH --mem=16G
 #SBATCH --cpus-per-task=4

@@ -376,7 +376,7 @@ set fmri(tempfilt_yn2) 1
 set fmri(deriv_yn2) 1
 
 # Custom EV file (EV 2)
-set fmri(custom2) "/burg/dslab/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_Qchose_runXXRUNXX.txt"
+set fmri(custom2) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_Qchose_runXXRUNXX.txt"
 
 # Orthogonalise EV 2 wrt EV 0
 set fmri(ortho2.0) 0
@@ -435,7 +435,7 @@ set fmri(tempfilt_yn3) 1
 set fmri(deriv_yn3) 1
 
 # Custom EV file (EV 3)
-set fmri(custom3) "/burg/dslab/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/oldval_runXXRUNXX.txt"
+set fmri(custom3) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/oldval_runXXRUNXX.txt"
 
 # Orthogonalise EV 3 wrt EV 0
 set fmri(ortho3.0) 0
@@ -494,7 +494,7 @@ set fmri(tempfilt_yn4) 1
 set fmri(deriv_yn4) 1
 
 # Custom EV file (EV 4)
-set fmri(custom4) "/burg/dslab/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/FB_runXXRUNXX.txt"
+set fmri(custom4) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/FB_runXXRUNXX.txt"
 
 # Orthogonalise EV 4 wrt EV 0
 set fmri(ortho4.0) 0
@@ -553,7 +553,7 @@ set fmri(tempfilt_yn5) 1
 set fmri(deriv_yn5) 1
 
 # Custom EV file (EV 5)
-set fmri(custom5) "/burg/dslab/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/FB_pe_runXXRUNXX.txt"
+set fmri(custom5) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/FB_pe_runXXRUNXX.txt"
 
 # Orthogonalise EV 5 wrt EV 0
 set fmri(ortho5.0) 0
@@ -612,7 +612,7 @@ set fmri(tempfilt_yn6) 1
 set fmri(deriv_yn6) 1
 
 # Custom EV file (EV 6)
-set fmri(custom6) "/burg/dslab/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/rt_runXXRUNXX.txt"
+set fmri(custom6) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/rt_runXXRUNXX.txt"
 
 # Orthogonalise EV 6 wrt EV 0
 set fmri(ortho6.0) 0
