@@ -21,7 +21,8 @@ rsync -zhav --prune-empty-dirs --ignore-existing \
 #     glob.glob(base+'TCST*/hybrid_r?/preproc_6mm_6del_100s_mc.feat/filtered_func_data.nii.gz'),
 #     glob.glob(base+'TCST*/hybrid_r?/preproc_6mm_6del_100s_mc.feat/reg/*'),
 #     glob.glob(base+'TCST*/hybrid_r?/preproc_6mm_6del_100s_mc.feat/mc/extended_confs_24par.txt'),
-#     glob.glob(base+'TCST*/hybrid_r?/')
+#     glob.glob(base+'TCST*/hybrid_r?/'),
+#     glob.glob(base+'behavior/*_output/EV_files/*.txt')
 # ])
 # files = [f[f.find('TCST'):] for f in files if np.all([sub not in f for sub in ['TCST001','TCST003','TCST011','TCST035']])]
 # print(len(files))

@@ -671,7 +671,7 @@ set fmri(tempfilt_yn7) 1
 set fmri(deriv_yn7) 1
 
 # Custom EV file (EV 7)
-set fmri(custom7) "/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior/XXSUBXX_output/EV_files/inval_runXXRUNXX.txt"
+set fmri(custom7) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/inval_runXXRUNXX.txt"
 
 # Orthogonalise EV 7 wrt EV 0
 set fmri(ortho7.0) 0

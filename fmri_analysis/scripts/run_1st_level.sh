@@ -7,7 +7,7 @@ run=$4
 
 if [ ! -e $input ];
 	then
-	echo $input does not exist!
+	echo $input does not exist for sub $sub, run $run !
 elif [ -z $run ];
 	then
 	echo Usage\:
@@ -17,11 +17,12 @@ else
 
 		if [ -e $output/stats/res4d.nii.gz ];
 			then 
-			echo $output completed already
+			echo $output completed already for sub $sub, run $run, model $(basename $fsf)
 		else
 			nvols=$(fslinfo $input | grep dim4 | grep -v pix | awk '{ print $2 }');
-			sed -e 's:XXSUBXX:'$sub':g' -e 's:XXRUNXX:'$run':g' -e 's:XXVOLSXX:'$nvols':g' -e 's:XXINXX:'$input':g'<$fsf>tmp.fsf;
-			feat tmp.fsf;
-			rm -rf tmp.fsf;
+			TMP_FSF=$(dirname $1)/../tmp.fsf
+			sed -e 's:XXSUBXX:'$sub':g' -e 's:XXRUNXX:'$run':g' -e 's:XXVOLSXX:'$nvols':g' -e 's:XXINXX:'$input':g'<$fsf>$TMP_FSF;
+			feat $TMP_FSF;
+			rm -f $TMP_FSF;
 		fi
 fi
