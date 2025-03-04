@@ -21,9 +21,9 @@ SUBDIR="$BASEDIR"/TCST0"$sub"
 echo "Processing subject: $sub"
 
 # Loop through all 5 GLMs for this subject
-for glm in /burg/dslab/users/csi2108/scripts/glms/*; do # for each GLM, run a fixed level analysis for this subject
+for glm in {1..5}; do 
 
-	model=$(basename $glm | cut -c1-10)
+    model="csi_model$glm"
     output="$BASEDIR/group_analyses/Subject_Level_FixEff/${sub}_${model}.gfeat"
 
     if [ -e $output/cope1.feat/stats/zstat1.nii.gz ]; then
@@ -41,18 +41,22 @@ for glm in /burg/dslab/users/csi2108/scripts/glms/*; do # for each GLM, run a fi
                 cp "$BASEDIR/TCST0$sub/structural/bravo.anat/T1_to_MNI_lin.mat" "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/highres2standard.mat"
                 cp "$BASEDIR/TCST0$sub/structural/bravo.anat/T1_to_MNI_nonlin_field.nii.gz" "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/highres2standard_warp.nii.gz"
                 cp "$BASEDIR/MNI152_T1_2mm_brain.nii.gz" "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/standard.nii.gz"
-                updatefeatreg "$t/$run_id/$feat/" # update other files in the reg folder
+                updatefeatreg "$BASEDIR/TCST0$sub/$run_id/$model.feat/" # update other files in the reg folder
             fi
         done
 
-        ## calculate how many inputs (sub TCST017 only has 4 runs)
+        ## calculate how many run inputs (sub TCST017 only has 4 runs)
         run_count=$(find "$BASEDIR"/TCST0"$sub"/hybrid_r?/"$model".feat -maxdepth 0 -type d 2>/dev/null | wc -l)
+        ## calculate how many contrast inputs
+        cope_count=$(ls $BASEDIR/TCST0$sub/$run_id/$model.feat/stats/cope?.nii.gz 2>/dev/null | wc -l)
+
 
         ## make template FSF file
         TMP_FSF="$BASEDIR/group_analyses/Subject_Level_FixEff/${sub}_${model}_tmp.fsf"
         sed -e "s:XXSUBXX:${sub}:g" \
             -e "s:XXMODELXX:${model}:g" \
             -e "s:XXVOLSXX:${run_count}:g" \
+            -e "s:XXCONTRASTSXX:${cope_count}:g" \
             $fsf > "$TMP_FSF"
 
         # replace stuff for the subject with only 4 runs
