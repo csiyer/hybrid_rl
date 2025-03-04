@@ -50,14 +50,18 @@ def write_df_to_ev(df, path):
         # no trials or all NA, empty regressor
         pd.DataFrame([[0, 0, 0]]).to_csv(path, sep=' ', header=False, index=False)
 
-    else: # length 3 and it has values
+    else: # length >3 and it has values
         if df.columns[2] == 'submem': # this one is different, we want to include both 0 and 1
             df[df.iloc[:, 2].isin([0,1])].to_csv(path, sep = ' ', header=False, index=False)
         else:
             df.iloc[:,2] = df.iloc[:,2].apply(round_to_num)
             if len(df.iloc[:,2].unique()) <= 3:
                 # this is a binary regressor, just get the "1" values
-                df[df.iloc[:, 2] == 1].to_csv(path, sep = ' ', header=False, index=False)
+                filt = df[df.iloc[:, 2] == 1]
+                if len(filt) == 0:
+                    pd.DataFrame([[0, 0, 0]]).to_csv(path, sep=' ', header=False, index=False)
+                else:
+                    filt.to_csv(path, sep = ' ', header=False, index=False)
             else:
                 # this is a parametric regressor, get all non-nan values
                 df[~pd.isna(df.iloc[:,2])].to_csv(path, sep= ' ', header=False, index=False)
