@@ -16,7 +16,7 @@ SUBJ_ID=$(printf "%02d" ${SUBJECTS[$SLURM_ARRAY_TASK_ID]})
 SUBJ_DIR="/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0$SUBJ_ID"
 
 echo "Processing subject: $SUBJ_ID"
-FSF=/burg/dslab/users/csi2108/scripts/glms/csi_model5.fsf
+
 # Loop through all 5 GLMs for this subject
 for FSF in /burg/dslab/users/csi2108/scripts/glms/*; # run each GLM
 do

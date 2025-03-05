@@ -6,7 +6,7 @@
 #SBATCH --time=02:00:00
 #SBATCH --mem=8G
 #SBATCH --cpus-per-task=2
-#SBATCH --array=1-5  # 5 different GLMs
+#SBATCH --array=1-3  # 5 different GLMs
 
 module load FSL/6.0.5.2
 
@@ -15,7 +15,7 @@ fsf=$(realpath "$BASEDIR/../scripts/glms/group_mixed_effects.fsf")
 example_first_level_dir="$BASEDIR/TCST002/hybrid_r1"
 
 # use the array jobs to do different models
-model="csi_model$SLURM_ARRAY_TASK_ID";
+model="csi_model${SLURM_ARRAY_TASK_ID}_rtdur"; ### CAREFUL!
 
 # make output dir if necessary
 model_out="$BASEDIR/group_analyses/Group_Level_MixEff/$model"
