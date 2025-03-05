@@ -40,7 +40,7 @@ for glm in {1..5}; do
                 # replace a few with the bravo outputs
                 cp "$BASEDIR/TCST0$sub/structural/bravo.anat/T1_to_MNI_lin.mat" "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/highres2standard.mat"
                 cp "$BASEDIR/TCST0$sub/structural/bravo.anat/T1_to_MNI_nonlin_field.nii.gz" "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/highres2standard_warp.nii.gz"
-                cp "$BASEDIR/MNI152_T1_2mm_brain.nii.gz" "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/standard.nii.gz"
+                cp $(realpath "$BASEDIR/../MNI152_T1_2mm_brain.nii.gz") "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/standard.nii.gz"
                 updatefeatreg "$BASEDIR/TCST0$sub/$run_id/$model.feat/" # update other files in the reg folder
             fi
         done
