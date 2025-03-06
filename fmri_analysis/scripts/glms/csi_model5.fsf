@@ -462,7 +462,7 @@ set fmri(ortho3.6) 0
 set fmri(ortho3.7) 0
 
 # EV 4 title
-set fmri(evtitle4) "choice_newt"
+set fmri(evtitle4) "choice"
 
 # Basic waveform shape (EV 4)
 # 0 : Square
@@ -494,7 +494,7 @@ set fmri(tempfilt_yn4) 1
 set fmri(deriv_yn4) 1
 
 # Custom EV file (EV 4)
-set fmri(custom4) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_noc_runXXRUNXX.txt"
+set fmri(custom4) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_runXXRUNXX.txt"
 
 # Orthogonalise EV 4 wrt EV 0
 set fmri(ortho4.0) 0

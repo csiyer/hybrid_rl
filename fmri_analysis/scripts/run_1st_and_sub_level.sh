@@ -17,8 +17,9 @@ SUBJ_ID=$(printf "%02d" ${SUBJECTS[$SLURM_ARRAY_TASK_ID]})
 SUBJ_DIR="$BASEDIR/TCST0$SUBJ_ID"
 
 echo "Processing subject: $SUBJ_ID"
-# Loop through all 5 GLMs for this subject
-for FSF in /burg/dslab/users/csi2108/scripts/glms/*rtdur*; do # run each GLM
+
+# Loop through all GLMs for this subject
+for FSF in /burg/dslab/users/csi2108/scripts/glms/csi_model*.fsf; do # run each GLM actively in this folder
 
     model=$(basename $FSF | cut -c1-16) ## CAREFUL!
 
@@ -46,7 +47,7 @@ for FSF in /burg/dslab/users/csi2108/scripts/glms/*rtdur*; do # run each GLM
     output="$BASEDIR/group_analyses/Subject_Level_FixEff/${model}_${SUBJ_ID}.gfeat"
     if [ -e $output/cope1.feat/stats/zstat1.nii.gz ]; then
         echo Fixed effects model already run for sub $sub, located at $output
-    
+
     else
         ### copy reg files from preprocessing directory to the first level dirs
         for r in "$BASEDIR"/TCST0"$sub"/hybrid_r?/preproc_6mm_6del_100s_mc.feat/reg/; do
@@ -94,6 +95,3 @@ for FSF in /burg/dslab/users/csi2108/scripts/glms/*rtdur*; do # run each GLM
         rm -rf "$BASEDIR/TCST0$sub/hybrid_r?/$model.feat/reg/"
     fi
 done
-
-
-
