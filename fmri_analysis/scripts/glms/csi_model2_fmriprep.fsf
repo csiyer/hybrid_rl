@@ -239,13 +239,13 @@ set fmri(reghighres_search) 90
 set fmri(reghighres_dof) BBR
 
 # Registration to standard image?
-set fmri(regstandard_yn) 0
+set fmri(regstandard_yn) 1
 
 # Use alternate reference images?
 set fmri(alternateReference_yn) 0
 
 # Standard image
-set fmri(regstandard) "/burg/dslab/users/csi2108/MNI152_T1_2mm_brain.nii.gz"
+set fmri(regstandard) "/burg/dslab/users/csi2108/mri_utils/MNI152_T1_2mm_brain.nii.gz"
 
 # Search space for registration to standard space
 # 0   : No search
@@ -254,7 +254,7 @@ set fmri(regstandard) "/burg/dslab/users/csi2108/MNI152_T1_2mm_brain.nii.gz"
 set fmri(regstandard_search) 90
 
 # Degrees of Freedom for registration to standard space
-set fmri(regstandard_dof) 12
+set fmri(regstandard_dof) 6
 
 # Do nonlinear registration from structural to standard space?
 set fmri(regstandard_nonlinear_yn) 0
@@ -266,7 +266,7 @@ set fmri(regstandard_nonlinear_warpres) 10
 set fmri(paradigm_hp) 100
 
 # Total voxels
-set fmri(totalVoxels) 54607872
+set fmri(totalVoxels) 58454760
 
 
 set fmri(fnirt_config) "T1_2_MNI152_2mm"
@@ -276,7 +276,7 @@ set fmri(fnirt_config) "T1_2_MNI152_2mm"
 set fmri(ncopeinputs) 0
 
 # 4D AVW data or FEAT directory (1)
-set feat_files(1) "XXINXX"
+set feat_files(1) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/fmriprep_bold_masked.nii.gz"
 
 # Add confound EVs text file
 set fmri(confoundevs) 1
