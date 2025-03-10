@@ -19,9 +19,7 @@ models_to_run=($BASEDIR/../scripts/glms/csi_model*) # all active moddels
 
 if (( SLURM_ARRAY_TASK_ID < ${#models_to_run[@]} )); then
 
-    model=$(basename "${models_to_run[$SLURM_ARRAY_TASK_ID]}") # get the model at this index
-    model=${model%.*} # take off ".fsf"
-
+    model=$(basename "${models_to_run[$SLURM_ARRAY_TASK_ID]}" .fsf)
     echo "Processing model $model"
 
     # make output dir if necessary
@@ -31,7 +29,7 @@ if (( SLURM_ARRAY_TASK_ID < ${#models_to_run[@]} )); then
     fi
 
     # get the contrast names associated with this model
-    contrast_names=($(awk -F' ' '/ContrastName/ {print $2}' "$example_first_level_dir/csi_model${SLURM_ARRAY_TASK_ID}.feat/design.con"));
+    contrast_names=($(awk -F' ' '/ContrastName/ {print $2}' "$example_first_level_dir/$model.feat/design.con"));
 
     # for each contrast
     for  i in ${!contrast_names[@]}; do 

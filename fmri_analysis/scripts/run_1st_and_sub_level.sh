@@ -21,12 +21,12 @@ echo "Processing subject: $SUBJ_ID"
 # Loop through all GLMs for this subject
 for FSF in /burg/dslab/users/csi2108/scripts/glms/csi_model*.fsf; do # run each GLM actively in this folder
 
-    model=$(basename $FSF | cut -c1-16) ## CAREFUL!
+    model=$(basename "$FSF" .fsf)
 
     ### FIRST LEVEL - for each run
-    for i in "$SUBJ_DIR"/hybrid_r?/preproc_6mm_6del_100s_mc.feat/filtered_func_data.nii.gz;
-    do
-        r=$(echo $i | cut -c58)  # Extract run number
+    for i in "$SUBJ_DIR"/hybrid_r?/preproc_6mm_6del_100s_mc.feat/filtered_func_data.nii.gz; do
+
+        r=$(echo $i | sed -E 's|.*/hybrid_r([1-5]+)/.*|\1|') # Extract run number
 
         if [ -e /burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/"$SUBJ_ID"_output/EV_files/FB_pe_run"$r".txt ]; then
             if [ -e "$SUBJ_DIR/hybrid_r$r/$model.feat/thresh_zstat1.nii.gz" ]; then

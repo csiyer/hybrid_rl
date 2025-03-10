@@ -30,13 +30,13 @@ set fmri(featwatcher_yn) 0
 set fmri(sscleanup_yn) 0
 
 # Output directory
-set fmri(outputdir) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/csi_model3.feat"
+set fmri(outputdir) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/csi_model3_fmriprep.feat"
 
 # TR(s)
 set fmri(tr) 2.000000
 
 # Total volumes
-set fmri(npts) 303
+set fmri(npts) XXVOLSXX
 
 # Delete volumes
 set fmri(ndelete) 0
@@ -245,7 +245,7 @@ set fmri(regstandard_yn) 1
 set fmri(alternateReference_yn) 0
 
 # Standard image
-set fmri(regstandard) "/burg/dslab/users/csi2108/mri_utils/MNI152_T1_2mm_brain.nii.gz"
+set fmri(regstandard) "/burg/dslab/users/csi2108/MNI152_T1_2mm_brain.nii.gz"
 
 # Search space for registration to standard space
 # 0   : No search
