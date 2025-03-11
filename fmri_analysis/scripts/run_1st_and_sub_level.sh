@@ -20,25 +20,24 @@ echo "Processing subject: $SUBJ_ID"
 
 ### FIRST LEVEL
 # Loop through all GLMs for this subject
-for FSF in /burg/dslab/users/csi2108/scripts/glms/csi_model*.fsf; do # run each GLM actively in this folder
+for FSF in $BASEDIR/scripts/glms/csi_model*.fsf; do # run each GLM actively in this folder
     model=$(basename "$FSF" .fsf)
-    for $rundir in "$SUBJ_DIR/hybrid_r?"; do
+    for rundir in "$SUBJ_DIR"/hybrid_r?; do
         r=$(echo "$rundir" | grep -oP 'hybrid_r[1-5]' | cut -c9) # Extract run number
-        if [ -e "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/$SUBJ_ID_output/EV_files/FB_pe_run$r".txt ]; then
+        if [ -e "$BASEDIR"/behavior/"$SUBJ_ID"_output/EV_files/FB_pe_run"$r".txt ]; then
             if [ -e "$SUBJ_DIR/hybrid_r$r/$model.feat/thresh_zstat1.nii.gz" ]; then
                 echo "Already completed subject $SUBJ_ID, run $r - skipping..."
             else
                 echo "Running GLM $model for subject $SUBJ_ID, run $r"
-                bash /burg/dslab/users/csi2108/scripts/run_1st_level.sh $FSF $SUBJ_ID $r
+                bash $BASEDIR/scripts/run_1st_level.sh $FSF $SUBJ_ID $r
             fi
         else 
             echo "No behavioral files for subject $SUBJ_ID, run $r - skipping..."
         fi
     done
 
-
     ### SUBJECT LEVEL
-    fsf=$(realpath "$BASEDIR/../scripts/glms/subject_fixed_effects.fsf")
+    fsf=$(realpath "$BASEDIR/scripts/glms/subject_fixed_effects.fsf")
     sub=$SUBJ_ID
 
     output="$BASEDIR/group_analyses/Subject_Level_FixEff/${model}_${SUBJ_ID}.gfeat"

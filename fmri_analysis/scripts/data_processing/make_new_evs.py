@@ -160,9 +160,9 @@ for subdir in [i for i in os.listdir(ROOTPATH) if '_output' in i]:
         choice_evs['choice_Qunchose_oldc'] = np.where((rundata['OldT'] == 1)&(rundata['OldObjC']==1), rundata['Q_unchosen'], np.nan)
         choice_evs['choice_Qunchose'] = rundata['Q_unchosen']
         choice_evs['choice_revT'] = rundata['RevT']
-        choice_evs['oldval_newc'] = np.where(rundata['OldObjC']==0, rundata['ObjPP'], np.nan) - 0.5
-        choice_evs['oldval_oldc'] = np.where(rundata['OldObjC']==1, rundata['ObjPP'], np.nan) - 0.5
-        choice_evs['oldval'] = rundata['ObjPP'] - 0.5
+        choice_evs['oldval_newc'] = (np.where(rundata['OldObjC']==0, rundata['ObjPP'], np.nan) - 0.5).round(1) # idk its weird
+        choice_evs['oldval_oldc'] = (np.where(rundata['OldObjC']==1, rundata['ObjPP'], np.nan) - 0.5).round(1)
+        choice_evs['oldval'] = (rundata['ObjPP'] - 0.5).round(1)
         # choice_evs['oldvaldiff'] = rundata[''] #  not sure what this is, not in make_EV.m
 
         fb_evs['FB_eplik_enc'] = rundata['Ep_lik_enc']

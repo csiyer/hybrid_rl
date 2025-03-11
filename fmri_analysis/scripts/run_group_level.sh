@@ -11,11 +11,11 @@
 module load FSL/6.0.5.2
 
 BASEDIR=/burg/dslab/users/csi2108/hybrid_mri_CSI
-fsf=$(realpath "$BASEDIR/../scripts/glms/group_mixed_effects.fsf")
+fsf=$(realpath "$BASEDIR/scripts/glms/group_mixed_effects.fsf")
 example_first_level_dir="$BASEDIR/TCST002/hybrid_r1"
 
 
-models_to_run=($BASEDIR/../scripts/glms/csi_model*) # all active moddels
+models_to_run=($BASEDIR/scripts/glms/csi_model*) # all active moddels
 
 if (( SLURM_ARRAY_TASK_ID < ${#models_to_run[@]} )); then
 
