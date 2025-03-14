@@ -3,7 +3,7 @@
 #SBATCH --job-name=csi_fmri
 #SBATCH --output=logs/%A_%a.out
 #SBATCH --error=logs/%A_%a.err
-#SBATCH --time=2:00:00
+#SBATCH --time=3:00:00
 #SBATCH --mem=16G
 #SBATCH --cpus-per-task=4
 #SBATCH --array=0-30  # 31 valid subjects (index-based)
@@ -49,24 +49,26 @@ for FSF in $BASEDIR/scripts/glms/csi_model*.fsf; do # run each GLM actively in t
         ### copy reg files from preprocessing output to lower level dirs
         for r in "$BASEDIR"/TCST0"$sub"/hybrid_r?/preproc_6mm_6del_100s_mc.feat/reg/; do
             run_id=$(basename "$(dirname "$(dirname "$r")")") # "hybrid_r1" e.g.
-            if [ ! -e "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/example_func2standard.mat" ]; then
-                # files haven't already been copied
+
+            rm -rf "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/"
+            #### if we're working with (already MNI) fmriprep data, we need to do some hack-y stuff to stop FSL from re-registering
+            if [[ "$model" == *fmriprep ]]; then
+                mkdir "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/"
+                # 1. replace mat transforms with identity matrix
+                yes | cp /burg/dslab/users/csi2108/mri_utils/ident.mat "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/example_func2highres.mat"
+                yes | cp /burg/dslab/users/csi2108/mri_utils/ident.mat "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/highres2standard.mat"
+                # 2. replace standard image with mean functional image
+                yes | cp $BASEDIR/TCST0$sub/$run_id/$model.feat/mean_func.nii.gz $BASEDIR/TCST0$sub/$run_id/$model.feat/reg/standard.nii.gz
+                yes | cp $BASEDIR/TCST0$sub/$run_id/$model.feat/mean_func.nii.gz $BASEDIR/TCST0$sub/$run_id/$model.feat/reg/highres.nii.gz
+                updatefeatreg $BASEDIR/TCST0$sub/$run_id/$model.feat/
+            else 
+                # copy the reg directory from preprocessing
                 cp -R "$r" "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg" # copy reg files
                 # replace a few with the bravo outputs
-                cp "$BASEDIR/TCST0$sub/structural/bravo.anat/T1_to_MNI_lin.mat" "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/highres2standard.mat"
-                cp "$BASEDIR/TCST0$sub/structural/bravo.anat/T1_to_MNI_nonlin_field.nii.gz" "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/highres2standard_warp.nii.gz"
-                cp $(realpath "$BASEDIR/../MNI152_T1_2mm_brain.nii.gz") "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/standard.nii.gz"
+                yes | cp "$BASEDIR/TCST0$sub/structural/bravo.anat/T1_to_MNI_lin.mat" "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/highres2standard.mat"
+                yes | cp "$BASEDIR/TCST0$sub/structural/bravo.anat/T1_to_MNI_nonlin_field.nii.gz" "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/highres2standard_warp.nii.gz"
+                yes | cp $(realpath "$BASEDIR/../mri_utils/MNI152_T1_2mm_brain.nii.gz") "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/standard.nii.gz"
                 updatefeatreg "$BASEDIR/TCST0$sub/$run_id/$model.feat/" # update other files in the reg folder
-            fi
-
-            #### if we're working with (already MNI) fmriprep data, we need to do some hack-y stuff to stop FSL from re-registering
-            if [[ "$model" == *fmriprep* ]]; then
-                # 1. remove all mat files
-                rm -f "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/*.mat"
-                # 2. replace standard transform with identity matrix
-                cp /burg/dslab/users/csi2108/mri_utils/ident.mat "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/example_func2standard.mat"
-                # 3. replace standard image with mean functional image
-                cp "$BASEDIR/TCST0$sub/$run_id/$model.feat/mean_func.nii.gz "$BASEDIR/TCST0$sub/$run_id/$model.feat/reg/standard.nii.gz
             fi
         done
             

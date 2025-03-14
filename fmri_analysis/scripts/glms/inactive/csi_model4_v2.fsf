@@ -30,7 +30,7 @@ set fmri(featwatcher_yn) 0
 set fmri(sscleanup_yn) 0
 
 # Output directory
-set fmri(outputdir) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/csi_model4_fmriprep.feat"
+set fmri(outputdir) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/csi_model4_v2.feat"
 
 # TR(s)
 set fmri(tr) 2.000000
@@ -254,7 +254,7 @@ set fmri(regstandard) "/burg/dslab/users/csi2108/mri_utils/MNI152_T1_2mm_brain.n
 set fmri(regstandard_search) 90
 
 # Degrees of Freedom for registration to standard space
-set fmri(regstandard_dof) 6
+set fmri(regstandard_dof) 12
 
 # Do nonlinear registration from structural to standard space?
 set fmri(regstandard_nonlinear_yn) 0
@@ -266,7 +266,7 @@ set fmri(regstandard_nonlinear_warpres) 10
 set fmri(paradigm_hp) 100
 
 # Total voxels
-set fmri(totalVoxels) 58454760
+set fmri(totalVoxels) 54607872
 
 
 set fmri(fnirt_config) "T1_2_MNI152_2mm"
@@ -276,16 +276,16 @@ set fmri(fnirt_config) "T1_2_MNI152_2mm"
 set fmri(ncopeinputs) 0
 
 # 4D AVW data or FEAT directory (1)
-set feat_files(1) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/fmriprep_bold_masked.nii.gz"
+set feat_files(1) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/preproc_6mm_6del_100s_mc.feat/filtered_func_data.nii.gz"
 
 # Add confound EVs text file
 set fmri(confoundevs) 1
 
 # Confound EVs text file for analysis 1
-set confoundev_files(1) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/fmriprep_confounds_24par.txt"
+set confoundev_files(1) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/preproc_6mm_6del_100s_mc.feat/mc/extended_confs_24par.txt"
 
 # EV 1 title
-set fmri(evtitle1) "choice_oldt_opt"
+set fmri(evtitle1) "choice_oldc"
 
 # Basic waveform shape (EV 1)
 # 0 : Square
@@ -317,7 +317,7 @@ set fmri(tempfilt_yn1) 1
 set fmri(deriv_yn1) 1
 
 # Custom EV file (EV 1)
-set fmri(custom1) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_oldt_opt_runXXRUNXX.txt"
+set fmri(custom1) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_oldc_runXXRUNXX.txt"
 
 # Orthogonalise EV 1 wrt EV 0
 set fmri(ortho1.0) 0
@@ -341,7 +341,7 @@ set fmri(ortho1.5) 0
 set fmri(ortho1.6) 0
 
 # EV 2 title
-set fmri(evtitle2) "choice_oldt_nonopt"
+set fmri(evtitle2) "choice_newc"
 
 # Basic waveform shape (EV 2)
 # 0 : Square
@@ -373,7 +373,7 @@ set fmri(tempfilt_yn2) 1
 set fmri(deriv_yn2) 1
 
 # Custom EV file (EV 2)
-set fmri(custom2) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_oldt_nonopt_runXXRUNXX.txt"
+set fmri(custom2) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_newc_runXXRUNXX.txt"
 
 # Orthogonalise EV 2 wrt EV 0
 set fmri(ortho2.0) 0
@@ -397,7 +397,7 @@ set fmri(ortho2.5) 0
 set fmri(ortho2.6) 0
 
 # EV 3 title
-set fmri(evtitle3) "choice_newt"
+set fmri(evtitle3) "choice_noc"
 
 # Basic waveform shape (EV 3)
 # 0 : Square
@@ -630,22 +630,22 @@ set fmri(con_mode) orig
 set fmri(conpic_real.1) 1
 
 # Title for contrast_real 1
-set fmri(conname_real.1) "mem"
+set fmri(conname_real.1) "oldt-newt"
 
 # Real contrast_real vector 1 element 1
-set fmri(con_real1.1) 1.0
+set fmri(con_real1.1) 0.5
 
 # Real contrast_real vector 1 element 2
 set fmri(con_real1.2) 0
 
 # Real contrast_real vector 1 element 3
-set fmri(con_real1.3) -1.0
+set fmri(con_real1.3) 0.5
 
 # Real contrast_real vector 1 element 4
 set fmri(con_real1.4) 0
 
 # Real contrast_real vector 1 element 5
-set fmri(con_real1.5) 0
+set fmri(con_real1.5) -1.0
 
 # Real contrast_real vector 1 element 6
 set fmri(con_real1.6) 0
@@ -672,16 +672,16 @@ set fmri(con_real1.12) 0
 set fmri(conpic_orig.1) 1
 
 # Title for contrast_orig 1
-set fmri(conname_orig.1) "mem"
+set fmri(conname_orig.1) "oldt-newt"
 
 # Real contrast_orig vector 1 element 1
-set fmri(con_orig1.1) 1.0
+set fmri(con_orig1.1) 0.5
 
 # Real contrast_orig vector 1 element 2
-set fmri(con_orig1.2) -1.0
+set fmri(con_orig1.2) 0.5
 
 # Real contrast_orig vector 1 element 3
-set fmri(con_orig1.3) 0
+set fmri(con_orig1.3) -1.0
 
 # Real contrast_orig vector 1 element 4
 set fmri(con_orig1.4) 0.0
