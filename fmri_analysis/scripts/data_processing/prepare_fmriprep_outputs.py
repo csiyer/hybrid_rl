@@ -62,10 +62,8 @@ for i in range(len(subs)):
                 # write to FSL-compatible txt file
                 outpath = OUTPUT_DIR + f'{orig}/hybrid_r{run_num}/fmriprep_confounds_24par.txt'
                 confounds_trim.to_csv(os.path.join(OUTPUT_DIR, relative_outpath), sep=' ', index=False, header=False)
-                output_fpaths.append(relative_outpath)
         else:
-            pass
-            print(f'Confounds file already created for subject {sub}, run {run}')
+            print(f'Confounds file already created for subject {orig}, run {run_num}')
         output_fpaths.append(relative_outpath)
 
 
