@@ -19,15 +19,20 @@ def process_one_sub(sub):
     sub_mask = nib.load(sub_mask_file)
     sub_mask_indices = np.where( sub_mask.get_fdata().astype(bool) )
 
+    if sub == 'sub-hybrid13':
+        # there is one voxel in subject 13 that is on the edge of the brain and counted as 0 by nibetaseries
+        # this only occurs in runs 2 and 3, but we'll exclude the voxel from all runs for consistency
+        run3path = subdir + '/sub-hybrid13_task-main_run-3_space-MNI152NLin2009cAsym_desc-choice_betaseries.nii.gz'
+        run3beta = nib.load(run3path).get_fdata()
+        run3masked = run3beta[sub_mask_indices]
+        allzero_voxel = np.all(run3masked == 0, axis=1).nonzero()[0][0] # there is only one, it's voxel 126 in the flattened array
+
     for beta_file in [f for f in glob.glob(subdir + '/*betaseries.nii.gz') if 'inval' not in f]: # only choice and fb trials
         beta_data = nib.load(beta_file).get_fdata()
         beta_masked = beta_data[sub_mask_indices]
 
-        # there is one voxel in subject that is on the edge of the brain and counted as 0 by nibetaseries
-        allzero_voxels = np.all(beta_masked == 0, axis=1).nonzero()[0]
-        if len(allzero_voxels) > 1:
-            print("ERROR: unexpectedly more than 1 voxel with no signal")
-        beta_masked = np.delete(beta_masked, allzero_voxels[0], axis = 0) 
+        if sub == 'sub-hybrid13':
+            beta_masked = np.delete(beta_masked, allzero_voxel, axis = 0) 
 
         # normalize within-pattern
         beta_normalized = (beta_masked - np.mean(beta_masked, axis=1, keepdims=True)) / np.std(beta_masked, axis=1, keepdims=True)
