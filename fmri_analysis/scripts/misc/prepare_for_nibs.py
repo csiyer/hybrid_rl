@@ -11,6 +11,7 @@ def get_orig_sub_num(bids_sub_num):
 
 def create_events_file(sub,run,beh_path='/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior'):
     """Create events file with choice and feedback trials for beta series modeling"""
+    # NOTE!!! the first 6 volumes have already been removed from the functional data, as well as from these onset times!
     orig_sub = get_orig_sub_num(sub) # from bids number to original
 
     choice_onsets = np.loadtxt(os.path.join(beh_path, f'{orig_sub}_output/EV_files/choice_run{run}.txt'))[:,0]
