@@ -19,44 +19,46 @@ for subfolder in "$ROOT"/sub-hybrid??; do
     anat_dir="$ROOT/$sub_id/anat"
 
     # ---- Convert aseg.mgz to NIfTI ---- #
-    aseg_nii="$ROOT/sourcedata/freesurfer/$sub_id/mri/aseg.nii.gz"
-    if [ ! -f "$aseg_nii" ]; then
-        echo "Converting aseg.mgz to NIfTI for $sub_id..."
-        mri_convert "$ROOT"/sourcedata/freesurfer/"$sub_id"/mri/aseg.{mgz,nii.gz}
+    aparcaseg_nii="$ROOT/sourcedata/freesurfer/$sub_id/mri/aparcaseg.nii.gz"
+    if [ ! -f "$aparcaseg_nii" ]; then
+        echo "Converting aparcaseg.mgz to NIfTI for $sub_id..."
+        mri_convert "$ROOT"/sourcedata/freesurfer/"$sub_id"/mri/aparc+aseg.mgz "$ROOT"/sourcedata/freesurfer/"$sub_id"/mri/aparcaseg.nii.gz
     else
-        echo "aseg.nii.gz already exists for $sub_id, skipping conversion."
+        echo "aparcaseg.nii.gz already exists for $sub_id, skipping conversion."
     fi
 
     # ---- Transform segmentation to MNI space ---- #
-    aseg_mni="$anat_dir/${sub_id}_space-MNI152NLin2009cAsym_seg-aseg_dseg.nii.gz"
+    aparcaseg_mni="$anat_dir/${sub_id}_space-MNI152NLin2009cAsym_seg-aparcaseg_dseg.nii.gz"
 
-    # Check if the MNI-transformed aseg already exists
-    if [ ! -f "$aseg_mni" ]; then
-        echo "Transforming aseg.mgz to MNI space for $sub_id..."
+    # Check if the MNI-transformed aparcaseg already exists
+    if [ ! -f "$aparcaseg_mni" ]; then
+        echo "Transforming aparcaseg.mgz to MNI space for $sub_id..."
         antsApplyTransforms \
-            -i "$aseg_nii" \
+            -i "$aparcaseg_nii" \
             -r "$ROOT/$sub_id/func/${sub_id}_task-main_run-1_space-MNI152NLin2009cAsym_boldref.nii.gz" \
-            -o "$aseg_mni" \
+            -o "$aparcaseg_mni" \
             -n GenericLabel \
             -t "$anat_dir/${sub_id}_from-T1w_to-MNI152NLin2009cAsym_mode-image_xfm.h5" \
             -t "$anat_dir/${sub_id}_from-fsnative_to-T1w_mode-image_xfm.txt"
     else
-        echo "Aseg MNI already exists, skipping transformation."
+        echo "aparcaseg MNI already exists, skipping transformation."
     fi
 
-    # ---- Extract Hippocampal ROIs for this subject ---- #
-    l_file="$anat_dir"/"$sub_id"_space-MNI152NLin2009cAsym_desc-hippocampusL.nii.gz
-    r_file="$anat_dir"/"$sub_id"_space-MNI152NLin2009cAsym_desc-hippocampusR.nii.gz
-    bl_file="$anat_dir"/"$sub_id"_space-MNI152NLin2009cAsym_desc-hippocampusBL.nii.gz
-
-    # Left Hippocampus (Label 17)
-    fslmaths "$aseg_mni" -thr 17 -uthr 17 -div 17 "$l_file"
-    # Right Hippocampus (Label 53)
-    fslmaths "$aseg_mni" -thr 53 -uthr 53 -div 53 "$r_file"
-    # Bilateral Hippocampus (Left + Right)
-    fslmaths "$l_file" -add "$r_file" "$bl_file"
+    # ---- Extract ROIs for this subject ---- #
+    # hippocampus
+    hipp_path="$anat_dir"/"$sub_id"_space-MNI152NLin2009cAsym_desc-hippocampusBL.nii.gz 
+    mri_binarize --i $aparcaseg_mni --match 17 53 --o $hipp_path
+    # combined caudate + putamen
+    striatum_path="$anat_dir"/"$sub_id"_space-MNI152NLin2009cAsym_desc-caudate+putamen.nii.gz
+    mri_binarize --i $aparcaseg_mni --match 11 12 50 51 --o $striatum_path
+    # lateral occipital
+    loc_path="$anat_dir"/"$sub_id"_space-MNI152NLin2009cAsym_desc-loc.nii.gz
+    mri_binarize --i $aparcaseg_mni --match 1011 2011 --o $loc_path
+    # vmPFC
+    vmpfc_path="$anat_dir"/"$sub_id"_space-MNI152NLin2009cAsym_desc-vmpfc.nii.gz
+    mri_binarize --i $aparcaseg_mni --match 1014 2014 1026 2026 --o $vmpfc_path
 
     # ---- Copy ROIs into initial fmriprep directory too ---- #
     alt_anat_dir="$ALT_ROOT/$sub_id/anat"
-    cp $aseg_mni $l_file $r_file $bl_file "$alt_anat_dir/" 
+    cp $aparcaseg_mni $hipp_path $striatum_path $vmpfc_path "$alt_anat_dir/" 
 done
