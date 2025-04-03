@@ -187,6 +187,16 @@ for subdir in [i for i in os.listdir(ROOTPATH) if '_output' in i]:
         choice_evs['oldval_oldc'] = (np.where(rundata['OldObjC']==1, rundata['ObjPP'], np.nan) - 0.5).round(1)
         choice_evs['oldval'] = (rundata['ObjPP'] - 0.5).round(1)
         # choice_evs['oldvaldiff'] = rundata[''] #  not sure what this is, not in make_EV.m
+        
+        # constrast coded-versions of memory-optimal and q-optimal decisions
+        choice_evs['choice_oldt_opt-nonopt'] = choice_evs['choice_oldt_opt'] - choice_evs['choice_oldt_nonopt']
+        choice_evs['oldt_qdiff-bin'] = np.sign(rundata['Q_diff'][rundata['OldT'] == 1])
+        # add encoding-shifted optimal-nonoptimal
+        for i,row in rundata.iterrows():
+            if row.OldT==1:
+                enc_index = rundata.index[rundata.Trial == (row.Trial-row.Delay)]
+                rundata.loc[enc_index,'Enc_opt-nonopt'] = np.sign(row.OptObj-0.5) # convert {0,1} to {-1,1}
+        fb_evs['FB_enc_opt-nonopt'] = rundata['Enc_opt-nonopt']
 
         fb_evs['FB_eplik_enc'] = rundata['Ep_lik_enc']
         fb_evs['FB_eplik'] = rundata['Ep_lik']
