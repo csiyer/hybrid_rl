@@ -42,9 +42,13 @@ def round_to_num(val, num=5):
         return np.round(val, num)
     return val
 
-def write_df_to_ev(df, path):
+def write_df_to_ev(df, path, overwrite=False):
     if len(df.columns) != 3:
         print('ERROR - more or less than 3 columns')
+
+    if os.path.isfile(path) and not overwrite:
+        print('Error--file already exists. Pass overwrite=true to ignore.')
+        return 
     
     elif len(df) == 0 or np.all(pd.isna(df.iloc[:,2])):
         # no trials or all NA, empty regressor
@@ -78,12 +82,14 @@ for subdir in [i for i in os.listdir(ROOTPATH) if '_output' in i]:
     subdirpath = os.path.join(ROOTPATH, subdir)
     sub = int(subdir[0:2])
 
-    # rename the EV files folder
-    os.rename(subdirpath+'/EV_files', subdirpath+'/EV_files_OLD')
+    if not os.path.exists(subdirpath+'/EV_files_OLD'):
+        # rename the EV files folder
+        os.rename(subdirpath+'/EV_files', subdirpath+'/EV_files_OLD')
+        os.makedirs(subdirpath+'/EV_files')
+        os.makedirs(subdirpath+'/EV_files/RTDur')
+
     if subdir in exclusions:
         continue # skip this subject for making the new EV files
-    os.makedirs(subdirpath+'/EV_files')
-    os.makedirs(subdirpath+'/EV_files/RTDur')
 
     # load behavioral data from mat file
     matfile = scipy.io.loadmat(subdirpath + f'/Performance_5.mat') # this contains all data from all the runs we'll just use this
@@ -124,6 +130,23 @@ for subdir in [i for i in os.listdir(ROOTPATH) if '_output' in i]:
             'onset': np.round(fb_start_times[valid_mask], 4),
             'duration': np.round(fb_end_times[valid_mask] - fb_start_times[valid_mask], 4), # should be almost exactly 1.5
             'FB': np.ones(sum(valid_mask), dtype=int)
+        })
+
+        # Response (left/right) regressors
+        # we will code resp == 1 as Left and resp == 2 as Right, but it doesn't matter in the GLM
+        # this doesn't need the valid mask because that's coded in response_LR
+        response_LR = matfile['Performance']['choose'][0,0]['resp'][0,0][0][run_mask]
+        response_onsets_L = time_of_response[response_LR == 1]
+        response_onsets_R = time_of_response[response_LR == 2]
+        left_ev = pd.DataFrame({
+            'onset': np.round(response_onsets_L, 4),
+            'duration': np.zeros(len(response_onsets_L)), # stick regressors with 0 duration
+            'value': np.ones(len(response_onsets_L), dtype=int)
+        })
+        right_ev = pd.DataFrame({
+            'onset': np.round(response_onsets_R, 4),
+            'duration': np.zeros(len(response_onsets_R)), # stick regressors with 0 duration
+            'value': np.ones(len(response_onsets_R), dtype=int)
         })
 
         # now, create all the special choice EV files
@@ -207,12 +230,16 @@ for subdir in [i for i in os.listdir(ROOTPATH) if '_output' in i]:
         # cut off events from the first 12s (negative onset time) these are from the 6 removed TRs
         inval_ev = inval_ev[inval_ev['onset'] >= 0].reset_index(drop=True)
         rt_ev = rt_ev[rt_ev['onset'] >= 0].reset_index(drop=True)
+        right_ev = right_ev[right_ev['onset'] >= 0].reset_index(drop=True)
+        left_ev = left_ev[left_ev['onset'] >= 0].reset_index(drop=True)
         choice_evs = choice_evs[choice_evs['onset'] >= 0].reset_index(drop=True)
         fb_evs = fb_evs[fb_evs['onset'] >= 0].reset_index(drop=True)
 
         # save as 3-column FSL txt files
         write_df_to_ev(inval_ev, path = subdirpath+f'/EV_files/inval_run{run}.txt')
         write_df_to_ev(rt_ev, path = subdirpath+f'/EV_files/rt_run{run}.txt')
+        write_df_to_ev(right_ev, path = subdirpath+f'/EV_files/respR_run{run}.txt')
+        write_df_to_ev(left_ev, path = subdirpath+f'/EV_files/respL_run{run}.txt')
         for col in fb_evs.columns:
             if col not in ['onset','duration']:
                 write_df_to_ev(fb_evs[['onset','duration',col]], path = subdirpath+f'/EV_files/{col}_run{run}.txt')
