@@ -26,6 +26,23 @@ def get_beh_data(sub_num):
     return beh[(beh.Sub==orig_sub_num) & (~pd.isna(beh.RT))].reset_index()
 
 
+def get_encoding_retrieval_pairs(beh_data):
+    """Get indices of matching encoding and retrieval pairs"""
+    retrieval_indices = beh_data.index[beh_data.OldT == 1].to_numpy()
+    encoding_indices = []
+    retrieval_indices_to_remove = []
+    for i,retrieval_idx in enumerate(retrieval_indices):
+        encoding_trials_idx_match = beh_data.index[beh_data.Trial == beh_data.encTrialNum.iloc[retrieval_idx]]
+        if len(encoding_trials_idx_match) == 0:
+            # encoding trial was an invalid trial, excluded from neuroimaging analyses
+            retrieval_indices_to_remove.append(i)
+        else:
+            encoding_indices.append(encoding_trials_idx_match[0]) # append matching index
+    encoding_indices = np.array(encoding_indices)
+    retrieval_indices = np.delete(retrieval_indices, retrieval_indices_to_remove)
+    return encoding_indices, retrieval_indices
+
+
 def get_nibs_files(sub_num, trial_type):
     """Retrieve filenames of beta series images for a given trial type (choice or fb)"""
     sub_id = f'sub-hybrid{sub_num:02d}'
@@ -34,6 +51,26 @@ def get_nibs_files(sub_num, trial_type):
         for run in range(1,6) if not (sub_num ==12 and run ==4)
     ]
     return sub_files
+
+
+def get_encoding_retrieval_data(sub_num, encoding_trial_type, encoding_indices, retrieval_indices):
+    """Get encoding patterns and retrieval patterns, index matched"""
+
+    choice_data = np.concatenate([
+        nib.load(im).get_fdata(dtype=np.float32) for im in get_nibs_files(sub_num,'choice')
+    ], axis=3)
+
+    retrieval_data = choice_data[:,:,:,retrieval_indices]
+
+    if encoding_trial_type=='fb':
+        fb_data = np.concatenate([
+            nib.load(im).get_fdata(dtype=np.float32) for im in get_nibs_files(sub_num,'fb')
+        ], axis=3)
+        encoding_data = fb_data[:,:,:,encoding_indices]
+    else:
+        encoding_data = choice_data[:,:,:,encoding_indices]
+
+    return encoding_data, retrieval_data
 
 
 def get_combined_brainmask(sub_num):
@@ -111,25 +148,10 @@ def run_searchlight(sub_num, encoding_trial_type='fb'):
 
     # get behavioral data for this subject, identify encoding-retrieval pairs (indices in the beh_data + nibs images)
     beh_data = get_beh_data(sub_num)
-    retrieval_indices = beh_data.index[beh_data.OldT == 1].to_numpy()
-    encoding_indices = np.array([ beh_data.index[beh_data.Trial == row.encTrialNum][0].astype(int) for _,row in beh_data[beh_data.OldT==1].iterrows()])
+    encoding_indices, retrieval_indices = get_encoding_retrieval_pairs(beh_data)
 
     # get subject beta series data 
-    choice_data = np.concatenate([
-        nib.load(im).get_fdata(dtype=np.float32) for im in get_nibs_files(sub_num,'choice')
-    ], axis=3)
-
-    retrieval_data = choice_data[:,:,:,retrieval_indices]
-
-    if encoding_trial_type=='fb':
-        fb_data = np.concatenate([
-            nib.load(im).get_fdata(dtype=np.float32) for im in get_nibs_files(sub_num,'fb')
-        ], axis=3)
-        encoding_data = fb_data[:,:,:,encoding_indices]
-        del fb_data
-    else:
-        encoding_data = choice_data[:,:,:,encoding_indices]
-    del choice_data
+    encoding_data, retrieval_data = get_encoding_retrieval_data(sub_num, encoding_trial_type, encoding_indices, retrieval_indices)
 
     # based on subject's brain mask, get the indices within each sphere (centered at each voxel in brain mask)
     sub_brainmask = get_combined_brainmask(sub_num)
