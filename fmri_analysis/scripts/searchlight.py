@@ -3,7 +3,7 @@ Searchlight for clusters of voxels whose patterns at retrieval trials correlate 
 When encoding_trial_type=='choice', this is unsurprising in visual areas but more surprising in other areas
 When encoding_trial_type=='fb', this would resemble reinstatement of some value representation.
 """
-import os
+import os, argparse
 import numpy as np
 import nibabel as nib
 import pandas as pd
@@ -11,12 +11,14 @@ from joblib import Parallel, delayed
 
 N_JOBS = -1
 
-bids_dir = '/Volumes/shohamy-locker/chris/hybrid_mri_bids'
+bids_dir = '/burg/dslab/users/csi2108/hybrid_mri_bids'
 nibs_dir = f'{bids_dir}/derivatives/nibetaseries'
 
 sub_conversion = pd.read_csv(f'{bids_dir}/n31_subject_list.txt')
-beh = pd.read_csv('/Users/chrisiyer/_Current/lab/code/hybrid_rl/fmri_analysis/data/hybrid_data.csv')
+beh = pd.read_csv(f'{bids_dir}/hybrid_data.csv')
 
+
+############ Loading data ################
 
 def get_beh_data(sub_num):
     """behavioral data of one subject, including only valid trials"""
@@ -29,6 +31,9 @@ def get_beh_data(sub_num):
 def get_encoding_retrieval_pairs(beh_data):
     """Get indices of matching encoding and retrieval pairs"""
     retrieval_indices = beh_data.index[beh_data.OldT == 1].to_numpy()
+    optimal_mask = beh_data.OptObj[beh_data.OldT==1] == 1 # mask for optimal trials
+
+    # find encoding indices of those retrieval trials
     encoding_indices = []
     retrieval_indices_to_remove = []
     for i,retrieval_idx in enumerate(retrieval_indices):
@@ -39,8 +44,11 @@ def get_encoding_retrieval_pairs(beh_data):
         else:
             encoding_indices.append(encoding_trials_idx_match[0]) # append matching index
     encoding_indices = np.array(encoding_indices)
+
+    # remove the retrieval trials whose encoding trials were invalid
     retrieval_indices = np.delete(retrieval_indices, retrieval_indices_to_remove)
-    return encoding_indices, retrieval_indices
+    optimal_mask = np.delete(optimal_mask, retrieval_indices_to_remove)
+    return encoding_indices, retrieval_indices, optimal_mask
 
 
 def get_nibs_files(sub_num, trial_type):
@@ -87,6 +95,8 @@ def get_combined_brainmask(sub_num):
     return combined_mask_img
 
 
+############ Searchlight sphere helpers ################
+
 def generate_sphere_offsets(radius):
     """Offsets relative to center (0,0,0) for a sphere of given radius."""
     x, y, z = np.mgrid[-radius:radius+1, -radius:radius+1, -radius:radius+1]
@@ -119,38 +129,68 @@ def extract_sphere_data(X, sphere_coords):
     return X[x, y, z, :].T  # shape: (n_trials, n_voxels_in_sphere)
 
 
-def encoding_retrieval_correlation_sphere(X_enc, X_ret):
+############ Computing correlations ################
+
+def encoding_retrieval_correlation(X_enc, X_ret):
     """
-    Compute mean correlation of encoding trial patterns and retrieval trial patterns.
+    Helper for below. Computes mean encoding-retrieval correlation.
     Both inputs should be (n_trials, n_voxels_in_sphere) and index-matched for encoding-retrieval pairs.
     """
-    # Normalize patterns
+    # Normalize patterns, dot product = correlation when normalized, average and z-transform 
     X_enc = (X_enc - X_enc.mean(axis=1, keepdims=True)) 
     X_ret = (X_ret - X_ret.mean(axis=1, keepdims=True)) 
-
     X_enc /= np.linalg.norm(X_enc, axis=1, keepdims=True)
     X_ret /= np.linalg.norm(X_ret, axis=1, keepdims=True)
-    
-    # cosine distance = r when normalized
     correlations = np.sum(X_enc * X_ret, axis=1)  # Dot product for each trial (N_trials,)
-
-    # average across encoding-retrieval pairs
-    return np.nanmean(correlations) 
+    return np.arctanh(np.nanmean(correlations) ) # average across encoding-retrieval pairs and z-transform
 
 
-def run_searchlight(sub_num, encoding_trial_type='fb'):
+def encoding_retrieval_match_mismatch(X_enc, X_ret):
+    """Variation of above, but compute the whole correlation matrix to subtract match-mismatch."""
+    # Normalize rows to zero-mean, unit-norm
+    X_enc = (X_enc - X_enc.mean(axis=1, keepdims=True))
+    X_ret = (X_ret - X_ret.mean(axis=1, keepdims=True))
+    X_enc /= np.linalg.norm(X_enc, axis=1, keepdims=True)
+    X_ret /= np.linalg.norm(X_ret, axis=1, keepdims=True)
+    corr_matrix = X_enc @ X_ret.T # Compute full correlation matrix (n_trials x n_trials)
+    # Extract match and mismatch
+    match_corrs = np.diag(corr_matrix)
+    mismatch_corrs = corr_matrix[np.tril_indices_from(corr_matrix, k=-1) ] # k=-1 excludes diagonal
+    # Fisher z-transform and return difference
+    return np.arctanh(np.nanmean(match_corrs)) - np.arctanh(np.nanmean(mismatch_corrs))
+
+
+def sphere_correlation(X_enc, X_ret, contrast, optimal_mask):
+    """
+    Main function called in the searchlight, on encoding and retrieval data within the sphere.
+    X_enc and X_ret should be data from extract_sphere_data() 
+    Contrast specifies opt-nonopt or match-mismatch
+    kwargs contains other stuff
+    """
+    if contrast == 'opt-nonopt':
+        opt = encoding_retrieval_correlation(X_enc[optimal_mask,:], X_ret[optimal_mask])
+        nonopt = encoding_retrieval_correlation(X_enc[~optimal_mask,:], X_ret[~optimal_mask])
+        return opt-nonopt # difference of z-transformed correlations
+    elif contrast == 'match-mismatch':
+        return encoding_retrieval_match_mismatch(X_enc, X_ret)
+
+
+############ Main ################
+
+def run_searchlight(sub_num, encoding_trial_type='fb', contrast='opt-nonopt'):
 
     sub_id = f'sub-hybrid{sub_num:02d}'
-    save_path = nibs_dir + f'/{sub_id}/func/{sub_id}_task-main_space-MNI152NLin2009cAsym_desc-enc{encoding_trial_type}_searchlight.nii.gz'
+    save_path = nibs_dir + f'/{sub_id}/func/{sub_id}_task-main_space-MNI152NLin2009cAsym_desc-{encoding_trial_type}_{contrast}_searchlight.nii.gz'
     if os.path.isfile(save_path):
         print(f'Already completed searchlight for sub {sub_num}, {encoding_trial_type}')
         return
 
     # get behavioral data for this subject, identify encoding-retrieval pairs (indices in the beh_data + nibs images)
     beh_data = get_beh_data(sub_num)
-    encoding_indices, retrieval_indices = get_encoding_retrieval_pairs(beh_data)
+    encoding_indices, retrieval_indices, optimal_mask = get_encoding_retrieval_pairs(beh_data) # mask for optimal retrieval trials
 
     # get subject beta series data 
+    # this handles the encoding_trial_type, and uses choice or fb data depending on that argument
     encoding_data, retrieval_data = get_encoding_retrieval_data(sub_num, encoding_trial_type, encoding_indices, retrieval_indices)
 
     # based on subject's brain mask, get the indices within each sphere (centered at each voxel in brain mask)
@@ -161,9 +201,10 @@ def run_searchlight(sub_num, encoding_trial_type='fb'):
 
     # Run searchlight (parallel)
     searchlight_results = Parallel(n_jobs=N_JOBS)(
-        delayed(encoding_retrieval_correlation_sphere)(
+        delayed(sphere_correlation)(
             extract_sphere_data(encoding_data, sphere_idxs),
-            extract_sphere_data(retrieval_data, sphere_idxs)
+            extract_sphere_data(retrieval_data, sphere_idxs),
+            contrast, optimal_mask
         ) for sphere_idxs in sphere_indices_list
     )
 
@@ -172,14 +213,21 @@ def run_searchlight(sub_num, encoding_trial_type='fb'):
     for val, coord in zip(searchlight_results, voxel_center_coords):
         results_3d[coord] = val
 
-    # Save to NIfTI
+    # save to nifti
     nib.save(nib.Nifti1Image(results_3d, sub_brainmask.affine), save_path)
+
     print(f"Searchlight map for sub {sub_num} saved to: {save_path}")
 
 
 
 if __name__ == '__main__':
-    for sub_num in range(1,32):
-        print('Beginning subject ', sub_num)
-        run_searchlight(sub_num, 'fb')
-        run_searchlight(sub_num, 'choice')
+    
+    parser = argparse.ArgumentParser(description='Run searchlight analysis for a given subject, encoding type, and contrast.')
+    parser.add_argument('--sub_num', type=int, help='Subject number (1 to 31)')
+    parser.add_argument('--enc_trial_type', type=str, choices=['fb', 'choice'], help='Encoding data from "choice" or "fb" period.')
+    parser.add_argument('--contrast', type=str, choices=['opt-nonopt', 'match-mismatch'], help='Contrast optimal choices - nonoptimal or matching trials - mismatching.')
+    args = parser.parse_args()
+
+    if args.sub_num and args.enc_trial_type and args.contrast:
+        print(f'Running subject {args.sub_num}, encoding type {args.enc_trial_type}, contrast {args.contrast}')
+        run_searchlight(args.sub_num, args.enc_trial_type, args.contrast)
