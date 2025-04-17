@@ -31,6 +31,18 @@ def add_prev_trial_outcomes(data):
     data.loc[old_t & ~prev_old_t, 'choice_oldt_prev_newt'] = 1
     data.loc[old_t & prev_old_t & prev_opt, 'choice_oldt_prev_oldt_opt'] = 1
     data.loc[old_t & prev_old_t & ~prev_opt, 'choice_oldt_prev_oldt_nonopt'] = 1
+
+    ### add choice_prev3_uncertainy and choice_prev3_old ## looking at previous 3 trials
+    # add a point for each old trial, and a point for each optobj trial
+    # Compute rolling sums (shifted so we don't include the current trial)
+    data['OptObj_helper'] = (data['OptObj'] == 1).astype(int)
+    data['prev3_old'] = data.groupby('Sub')['OldT'].transform(lambda x: x.shift(1).rolling(window=3, min_periods=1).sum())
+    data['prev3_optobj'] = data.groupby('Sub')['OptObj_helper'].transform(lambda x: x.shift(1).rolling(window=3, min_periods=1).sum())
+    data['prev3_certainty'] = data['prev3_old'] + data['prev3_optobj']
+    data = data.drop(columns='prev3_optobj')  # also fixed minor drop() syntax
+    data['prev3_old'] /= 6 # normalize to 1
+    data['prev3_certainty'] /= 6
+
     return data
 
 def round_to_num(val, num=5):
@@ -167,6 +179,8 @@ for subdir in [i for i in os.listdir(ROOTPATH) if '_output' in i]:
         choice_evs['choice_oldt_prev_newt'] = rundata['choice_oldt_prev_newt'] # added by the function above
         choice_evs['choice_oldt_prev_oldt_nonopt'] = rundata['choice_oldt_prev_oldt_nonopt'] # added by the function above
         choice_evs['choice_oldt_prev_oldt_opt'] = rundata['choice_oldt_prev_oldt_opt'] # added by the function above
+        choice_evs['choice_prev3_old'] = rundata['prev3_old']
+        choice_evs['choice_prev3_certainty'] = rundata['prev3_certainty']
         choice_evs['choice_oldt'] = rundata['OldT']
         choice_evs['choice_Qchose_newc'] = np.where((rundata['OldT'] == 1)&(rundata['OldObjC']==0), rundata['Q_chosen'], np.nan)
         choice_evs['choice_Qchose_noc'] = np.where(rundata['OldT'] == 0, rundata['Q_chosen'], np.nan)
