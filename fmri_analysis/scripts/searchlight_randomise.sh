@@ -7,7 +7,7 @@ BASE_DIR=/Volumes/shohamy-locker/chris/hybrid_mri_bids/derivatives/nibetaseries
 OUTPUT_DIR="$BASE_DIR/group_searchlight"
 FILE_PATTERN="sub-hybrid??/func/sub-hybrid??_task-main_space-MNI152NLin2009cAsym_desc-${TRIALTYPE_KEY}_searchlight.nii.gz"
 N_SUBJECTS=31
-N_PERMUTATIONS=5000
+N_PERMUTATIONS=1000
 
 # Create output directory
 if [ ! -e $OUTPUT_DIR ]; then mkdir -p $OUTPUT_DIR; fi
@@ -19,7 +19,7 @@ FILE_LIST=()
 for file in $BASE_DIR/$FILE_PATTERN; do
     FILE_LIST+=("$file")
 done
-echo ${#FILE_LIST[@]} files round
+echo ${#FILE_LIST[@]} files found
 concat_map=all_searchlights_${TRIALTYPE_KEY}.nii.gz
 fslmerge -t $concat_map "${FILE_LIST[@]}"
 
@@ -49,6 +49,6 @@ randomise \
   -d design.mat \
   -t design.con \
   -n $N_PERMUTATIONS \
-  -T
+  -c 3.1
 rm $concat_map
 echo "Done. Outputs in $OUTPUT_DIR/randomise_$TRIALTYPE_KEY_*"
