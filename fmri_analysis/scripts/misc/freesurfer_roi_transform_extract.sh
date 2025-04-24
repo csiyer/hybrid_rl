@@ -10,7 +10,7 @@
 command -v fslmaths >/dev/null || { echo "FSL not found. Exiting."; exit 1; }
 
 ROOT=/burg/dslab/users/csi2108/hybrid_mri_bids/derivatives/fmriprep_anat
-ALT_ROOT=/burg/dslab/users/csi2108/hybrid_mri_bids/derivatives/fmriprep # copying outputs here
+# ALT_ROOT=/burg/dslab/users/csi2108/hybrid_mri_bids/derivatives/fmriprep # copying outputs here
 
 for subfolder in "$ROOT"/sub-hybrid??; do 
    
@@ -44,21 +44,22 @@ for subfolder in "$ROOT"/sub-hybrid??; do
         echo "aparcaseg MNI already exists, skipping transformation."
     fi
 
+    mdkir -p "$anat_dir"/rois
     # ---- Extract ROIs for this subject ---- #
     # hippocampus
-    hipp_path="$anat_dir"/"$sub_id"_space-MNI152NLin2009cAsym_desc-hippocampusBL.nii.gz 
+    hipp_path="$anat_dir"/rois/"$sub_id"_space-MNI152NLin2009cAsym_desc-hippocampusBL.nii.gz 
     mri_binarize --i $aparcaseg_mni --match 17 53 --o $hipp_path
     # combined caudate + putamen
-    striatum_path="$anat_dir"/"$sub_id"_space-MNI152NLin2009cAsym_desc-caudate+putamen.nii.gz
+    striatum_path="$anat_dir"/rois/"$sub_id"_space-MNI152NLin2009cAsym_desc-caudate+putamen.nii.gz
     mri_binarize --i $aparcaseg_mni --match 11 12 50 51 --o $striatum_path
     # lateral occipital
-    loc_path="$anat_dir"/"$sub_id"_space-MNI152NLin2009cAsym_desc-loc.nii.gz
+    loc_path="$anat_dir"/rois/"$sub_id"_space-MNI152NLin2009cAsym_desc-loc.nii.gz
     mri_binarize --i $aparcaseg_mni --match 1011 2011 --o $loc_path
     # vmPFC
-    vmpfc_path="$anat_dir"/"$sub_id"_space-MNI152NLin2009cAsym_desc-vmpfc.nii.gz
+    vmpfc_path="$anat_dir"/rois/"$sub_id"_space-MNI152NLin2009cAsym_desc-vmpfc.nii.gz
     mri_binarize --i $aparcaseg_mni --match 1014 2014 1026 2026 --o $vmpfc_path
 
     # ---- Copy ROIs into initial fmriprep directory too ---- #
-    alt_anat_dir="$ALT_ROOT/$sub_id/anat"
-    cp $aparcaseg_mni $hipp_path $striatum_path $vmpfc_path "$alt_anat_dir/" 
+    # alt_anat_dir="$ALT_ROOT/$sub_id/anat"
+    # cp $aparcaseg_mni $hipp_path $striatum_path $vmpfc_path "$alt_anat_dir/" 
 done

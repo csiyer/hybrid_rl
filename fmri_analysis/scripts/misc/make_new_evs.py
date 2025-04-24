@@ -71,7 +71,7 @@ def write_df_to_ev(df, path, overwrite=False):
             df[df.iloc[:, 2].isin([0,1])].to_csv(path, sep = ' ', header=False, index=False)
         else:
             df.iloc[:,2] = df.iloc[:,2].apply(round_to_num)
-            if len(df.iloc[:,2].unique()) <= 3:
+            if len(df.iloc[:,2].unique()) <= 3 and 'prev3_old' not in path: # hack to avoid error
                 # this is a binary regressor, just get the "1" values
                 filt = df[df.iloc[:, 2] == 1]
                 if len(filt) == 0:
