@@ -43,7 +43,15 @@ def add_prev_trial_outcomes(data):
     data['prev3_old'] /= 6 # normalize to 1
     data['prev3_certainty'] /= 6
 
+    # add subsequent decision memory stuff
+    for i,row in data.iterrows():
+        if row.OldT==1:
+            enc_index = data.index[(data.Sub == row.Sub) & (data.Trial == (row.Trial-row.Delay))]
+            data.loc[enc_index,'subsequent_optobj'] = row.OptObj
+            data.loc[enc_index,'Enc_opt-nonopt'] = np.sign(row.OptObj - 0.5).astype(int)  # convert {0,1} to {-1,1}
+
     return data
+
 
 def round_to_num(val, num=5):
     if isinstance(val, int):
@@ -53,6 +61,7 @@ def round_to_num(val, num=5):
     if decimals > num:
         return np.round(val, num)
     return val
+
 
 def write_df_to_ev(df, path, overwrite=False):
     if len(df.columns) != 3:
@@ -71,16 +80,19 @@ def write_df_to_ev(df, path, overwrite=False):
             df[df.iloc[:, 2].isin([0,1])].to_csv(path, sep = ' ', header=False, index=False)
         else:
             df.iloc[:,2] = df.iloc[:,2].apply(round_to_num)
-            if len(df.iloc[:,2].unique()) <= 3 and 'prev3_old' not in path: # hack to avoid error
-                # this is a binary regressor, just get the "1" values
-                filt = df[df.iloc[:, 2] == 1]
+
+            unique_vals = df.iloc[:,2].unique()
+            if len(unique_vals) > 3 or 'prev3_old' in path: # hack to avoid error
+                # this is a parametric regressor, get all non-nan values
+                df[~pd.isna(df.iloc[:,2])].to_csv(path, sep= ' ', header=False, index=False)
+            else:
+                filt = df[abs(df.iloc[:, 2]) == 1] # this will include all 1 AND -1 values
+                # most regressors are 0 or 1, some are contrast-coded as -1 or 1
+                # so, 0s and NaNs will be ignored
                 if len(filt) == 0:
                     pd.DataFrame([[0, 0, 0]]).to_csv(path, sep=' ', header=False, index=False)
                 else:
                     filt.to_csv(path, sep = ' ', header=False, index=False)
-            else:
-                # this is a parametric regressor, get all non-nan values
-                df[~pd.isna(df.iloc[:,2])].to_csv(path, sep= ' ', header=False, index=False)
              
 			    
 # main script
@@ -107,6 +119,8 @@ for subdir in [i for i in os.listdir(ROOTPATH) if '_output' in i]:
     matfile = scipy.io.loadmat(subdirpath + f'/Performance_5.mat') # this contains all data from all the runs we'll just use this
 
     for run in sorted(data[data.Sub==sub].Run.unique()):
+
+        rundata = data[(data.Sub==sub) & (data.Run==run) & (~pd.isna(data.RT))].reset_index()
     
         # find the data in the matlab file
         # we will mask for the current run, and subtract 12 seconds to account for the 6 dropped TRs (2s each) at the start of the run
@@ -164,8 +178,6 @@ for subdir in [i for i in os.listdir(ROOTPATH) if '_output' in i]:
         # now, create all the special choice EV files
         # for parametric regressors, values with be either the proper value or nan
         # for binary/boxcar regressors, values will be 1 when they should be included (0 or nan otherwise)
-        rundata = data[(data.Sub==sub) & (data.Run==run) & (~pd.isna(data.RT))].reset_index()
-
         choice_evs['choice_enct'] = rundata['encT']
         choice_evs['choice_eplik_enc'] = rundata['Ep_lik_enc']
         choice_evs['choice_eplik'] = rundata['Ep_lik']
@@ -205,11 +217,12 @@ for subdir in [i for i in os.listdir(ROOTPATH) if '_output' in i]:
         # constrast coded-versions of memory-optimal and q-optimal decisions
         choice_evs['choice_oldt_opt-nonopt'] = choice_evs['choice_oldt_opt'] - choice_evs['choice_oldt_nonopt']
         choice_evs['oldt_qdiff-bin'] = np.sign(rundata['Q_diff'][rundata['OldT'] == 1])
-        # add encoding-shifted optimal-nonoptimal
-        for i,row in rundata.iterrows():
-            if row.OldT==1:
-                enc_index = rundata.index[rundata.Trial == (row.Trial-row.Delay)]
-                rundata.loc[enc_index,'Enc_opt-nonopt'] = np.sign(row.OptObj-0.5) # convert {0,1} to {-1,1}
+        choice_evs['choice_oldt_opt_mismatch'] = ((rundata['OptObj'] == 1) & (rundata['ObjDeckMatch'] == 1)).astype(int) # ObjDeckMatch is reversed from what it should be 
+        choice_evs['choice_oldt_nonopt_mismatch'] = ((rundata['OptObj'] == 0) & (rundata['ObjDeckMatch'] == 1)).astype(int) # ObjDeckMatch is reversed from what it should be 
+        choice_evs['choice_oldt_match'] = ((rundata['OldT'] == 1) & (rundata['ObjDeckMatch'] == 0)).astype(int)
+        # these columns made in the add_prev_trial_outcomes function
+        fb_evs['FB_enc_opt'] = ((rundata['encT'] == 1) & (rundata['subsequent_optobj'] == 1)).astype(int)
+        fb_evs['FB_enc_nonopt'] = ((rundata['encT'] == 1) & (rundata['subsequent_optobj'] == 0)).astype(int)
         fb_evs['FB_enc_opt-nonopt'] = rundata['Enc_opt-nonopt']
 
         fb_evs['FB_eplik_enc'] = rundata['Ep_lik_enc']
