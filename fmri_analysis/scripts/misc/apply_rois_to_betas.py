@@ -16,7 +16,9 @@ rois = {
     'v12L': 'v12L',
     'v12R': 'v12R',
     'locL': 'locL',
-    'locR': 'locR'
+    'locR': 'locR',
+    'v1L': 'v1L',
+    'v1R': 'v1R'
 }
 subs = sorted([i for i in os.listdir(nibs_base) if 'sub-hybrid' in i])
 
@@ -32,26 +34,21 @@ def process_one_sub(sub):
     os.makedirs(subdir + '/rois', exist_ok=True)
 
     for roi_in,roi_out in rois.items():
+        if roi_in == 'v1L' or roi_in == 'v1R':
 
-        # combine this subject's brain mask with a mask of what's included in the ROI
-        # (rarely there is ~1 voxel that is counted in ROI but not in brain mask)
-        roi_mask_file = os.path.join(fmriprep_anat_base, sub, 'anat', 'rois', f'{sub}_space-MNI152NLin2009cAsym_desc-{roi_in}.nii.gz')
-        roi_mask_bool = nib.load(roi_mask_file).get_fdata().astype(bool)
-        sub_mask_indices = np.where( sub_brainmask_bool & roi_mask_bool )
+            # combine this subject's brain mask with a mask of what's included in the ROI
+            # (rarely there is ~1 voxel that is counted in ROI but not in brain mask)
+            roi_mask_file = os.path.join(fmriprep_anat_base, sub, 'anat', 'rois', f'{sub}_space-MNI152NLin2009cAsym_desc-{roi_in}.nii.gz')
+            roi_mask_bool = nib.load(roi_mask_file).get_fdata().astype(bool)
+            sub_mask_indices = np.where( sub_brainmask_bool & roi_mask_bool )
 
-        for beta_file in [f for f in os.listdir(subdir) if 'betaseries.nii.gz' in f and 'inval' not in f]: # only choice and feedback
-            
-            beta_path = os.path.join(subdir, beta_file)
-            outpath = os.path.join(subdir, 'rois', beta_file).replace('.nii.gz', f'_{roi_out}_norm.npy')
+            for beta_file in [f for f in os.listdir(subdir) if 'betaseries.nii.gz' in f and 'inval' not in f]: # only choice and feedback
+                
+                beta_path = os.path.join(subdir, beta_file)
+                outpath = os.path.join(subdir, 'rois', beta_file).replace('.nii.gz', f'_{roi_out}_norm.npy')
 
-            ### DELETE
-            old_path = os.path.join(subdir, beta_file).replace('.nii.gz', f'_{roi_out}_norm.npy')
-            if os.path.isfile(old_path):
-                os.rename(old_path, outpath)
-            else:
-            ### un-indent below
                 if not os.path.isfile(outpath):
-
+                    
                     beta_data = nib.load(beta_path).get_fdata()
                     beta_masked = beta_data[sub_mask_indices]
 
