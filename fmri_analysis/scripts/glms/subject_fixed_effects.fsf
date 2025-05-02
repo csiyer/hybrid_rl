@@ -291,6 +291,9 @@ set fmri(copeinput.6) 1
 # Use lower-level cope 7 for higher-level analysis
 set fmri(copeinput.7) 1
 
+# Use lower-level cope 8 for higher-level analysis
+set fmri(copeinput.8) 1
+
 # 4D AVW data or FEAT directory (1)
 set feat_files(1) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_r1/XXMODELXX.feat"
 

@@ -177,14 +177,14 @@ def plot_separate_subjects(data, x_cols, y_cols, x_texts, y_texts, logistic_fit,
                 x_fit, y_fit = fit_logistic(x,y)
                 ax.plot(x_fit, y_fit, alpha=0.5)
             else:
-                ax.plot(x, y, alpha=0.5)
+                ax.plot(x, y, alpha=0.3)
         # plot mean
         mean_data = data.groupby(x_col)[y_col].mean().reset_index()
         if logistic_fit:
             x_mean_fit, y_mean_fit = fit_logistic(x = mean_data[x_col].values, y = mean_data[y_col].values)
             ax.plot(x_mean_fit, y_mean_fit, color='black', linewidth=3)
         else:
-            ax.plot(mean_data[x_col].values, mean_data[y_col].values, color='black', linewidth=3)
+            ax.plot(mean_data[x_col].values, mean_data[y_col].values, color='black', linewidth=4)
 
         ax.set_xlabel(x_text, fontsize=12)
         ax.set_ylabel(y_text, fontsize=12)
