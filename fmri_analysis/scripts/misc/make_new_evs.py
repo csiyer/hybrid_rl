@@ -194,10 +194,11 @@ for subdir in [i for i in os.listdir(ROOTPATH) if '_output' in i]:
         choice_evs['choice_prev3_old'] = rundata['prev3_old']
         choice_evs['choice_prev3_certainty'] = rundata['prev3_certainty']
         choice_evs['choice_oldt'] = rundata['OldT']
-        choice_evs['choice_Qchose_newc'] = np.where((rundata['OldT'] == 1)&(rundata['OldObjC']==0), rundata['Q_chosen'], np.nan)
-        choice_evs['choice_Qchose_noc'] = np.where(rundata['OldT'] == 0, rundata['Q_chosen'], np.nan)
-        choice_evs['choice_Qchose_oldc'] = np.where((rundata['OldT'] == 1)&(rundata['OldObjC']==1), rundata['Q_chosen'], np.nan)
         choice_evs['choice_Qchose'] = rundata['Q_chosen']
+        choice_evs['choice_Qchose_oldt'] = np.where(rundata['OldT'] == 1, rundata['Q_chosen'], np.nan)
+        choice_evs['choice_Qchose_noc'] = np.where(rundata['OldT'] == 0, rundata['Q_chosen'], np.nan)
+        choice_evs['choice_Qchose_newc'] = np.where((rundata['OldT'] == 1)&(rundata['OldObjC']==0), rundata['Q_chosen'], np.nan)
+        choice_evs['choice_Qchose_oldc'] = np.where((rundata['OldT'] == 1)&(rundata['OldObjC']==1), rundata['Q_chosen'], np.nan)
         choice_evs['choice_Qdiff_newc'] = np.where((rundata['OldT'] == 1)&(rundata['OldObjC']==0), rundata['Q_diff'], np.nan)
         choice_evs['choice_Qdiff_noc'] = np.where(rundata['OldT'] == 0, rundata['Q_diff'], np.nan)
         choice_evs['choice_Qdiff_noptdeck'] = np.where(rundata['LuckyDeckC'] == 0, rundata['Q_diff'], np.nan)
