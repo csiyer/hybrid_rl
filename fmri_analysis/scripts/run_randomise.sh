@@ -3,11 +3,12 @@
 module load FSL/6.0.5.2
 
 # --- Configuration ---
-BASEDIR=/burg/dslab/users/csi2108/hybrid_mri_CSI/group_analyses/ep_lik_v3_randomise
+UNIQUE_NAME=m2_oldval_randomise
+COPE_PATTERN="csi_model2_v3_??.gfeat/cope1.feat/stats/cope1.nii.gz"
+
+BASEDIR=/burg/dslab/users/csi2108/hybrid_mri_CSI/group_analyses/$UNIQUE_NAME
 COPE_DIR="$(dirname $BASEDIR)/Subject_Level_FixEff"
 OUTPUT_DIR="$BASEDIR" 
-# OUTPUT_DIR="$BASEDIR/randomise" 
-COPE_PATTERN="csi_model1_v3_??.gfeat/cope2.feat/stats/cope1.nii.gz"
 GROUP_MASK=/burg/dslab/users/csi2108/hybrid_mri_CSI/mask_group_thresh80.nii.gz
 N_SUBJECTS=31
 N_PERMUTATIONS=1000 
@@ -50,6 +51,6 @@ randomise \
   -t design.con \
   -m $GROUP_MASK \
   -n $N_PERMUTATIONS \
-  -c 2.3 # -T for TFCE
+  -T # -c 2.3 # -T for TFCE
 
 echo "Done. Outputs in $OUTPUT_DIR/randomise_*"
