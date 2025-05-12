@@ -9,7 +9,7 @@
 # module load FSL/6.0.5.2
 command -v fslmaths >/dev/null || { echo "FSL not found. Exiting."; exit 1; }
 
-ROOT=/burg/dslab/users/csi2108/hybrid_mri_bids/derivatives/fmriprep_anat
+ROOT=/burg/dslab/users/csi2108/hybrid_mri_bids/derivatives/fmriprep
 # ALT_ROOT=/burg/dslab/users/csi2108/hybrid_mri_bids/derivatives/fmriprep # copying outputs here
 
 for subfolder in "$ROOT"/sub-hybrid??; do 

@@ -6,8 +6,7 @@ from joblib import Parallel, delayed
 
 BIDSDIR='/Volumes/shohamy-locker/chris/hybrid_mri_bids'
 nibs_base= BIDSDIR + '/derivatives/nibetaseries'
-fmriprep_base= BIDSDIR + '/derivatives/fmriprep' # for brainmass
-fmriprep_anat_base=BIDSDIR + '/derivatives/fmriprep_anat' #ROIs stored with the other run of fmriprep
+fmriprep_base= BIDSDIR + '/derivatives/fmriprep' # for brainmasks and rois
 rois = {
     'hippocampusBL': 'hipp', 
     'vmpfc': 'vmpfc',
@@ -38,7 +37,7 @@ def process_one_sub(sub):
 
             # combine this subject's brain mask with a mask of what's included in the ROI
             # (rarely there is ~1 voxel that is counted in ROI but not in brain mask)
-            roi_mask_file = os.path.join(fmriprep_anat_base, sub, 'anat', 'rois', f'{sub}_space-MNI152NLin2009cAsym_desc-{roi_in}.nii.gz')
+            roi_mask_file = os.path.join(fmriprep_base, sub, 'anat', 'rois', f'{sub}_space-MNI152NLin2009cAsym_desc-{roi_in}.nii.gz')
             roi_mask_bool = nib.load(roi_mask_file).get_fdata().astype(bool)
             sub_mask_indices = np.where( sub_brainmask_bool & roi_mask_bool )
 

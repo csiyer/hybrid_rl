@@ -97,6 +97,7 @@ def write_df_to_ev(df, path, overwrite=False):
 			    
 # main script
 
+paths_to_server = []
 ROOTPATH = '/Volumes/shohamy-locker/shohamy_from_labshare/rgerraty/hybrid_mri/behavior'
 data = pd.read_csv(os.path.join(ROOTPATH,'hybrid_data.csv'))
 data = add_prev_trial_outcomes(data)
@@ -205,6 +206,12 @@ for subdir in [i for i in os.listdir(ROOTPATH) if '_output' in i]:
         choice_evs['choice_Qdiff_oldc'] = np.where((rundata['OldT'] == 1)&(rundata['OldObjC']==1), rundata['Q_diff'], np.nan)
         choice_evs['choice_Qdiff_optdeck'] = np.where(rundata['LuckyDeckC'] == 1, rundata['Q_diff'], np.nan)
         choice_evs['choice_Qdiff'] = rundata['Q_diff']
+        choice_evs['choice_Qopt'] = (rundata['Q_diff'] > 0).astype(int)
+        choice_evs['choice_Qnonopt'] = (rundata['Q_diff'] < 0).astype(int)
+        choice_evs['choice_oldt_Qopt'] = ((rundata['OldT'] == 1) & (rundata['Q_diff'] > 0)).astype(int)
+        choice_evs['choice_oldt_Qnonopt'] = ((rundata['OldT'] == 1) & (rundata['Q_diff'] < 0)).astype(int)
+        choice_evs['choice_newt_Qopt'] = ((rundata['OldT'] == 0) & (rundata['Q_diff'] > 0)).astype(int)
+        choice_evs['choice_newt_Qnonopt'] = ((rundata['OldT'] == 0) & (rundata['Q_diff'] < 0)).astype(int)
         choice_evs['choice_Qunchose_newc'] = np.where((rundata['OldT'] == 1)&(rundata['OldObjC']==0), rundata['Q_unchosen'], np.nan)
         choice_evs['choice_Qunchose_noc'] = np.where(rundata['OldT'] == 0, rundata['Q_unchosen'], np.nan)
         choice_evs['choice_Qunchose_oldc'] = np.where((rundata['OldT'] == 1)&(rundata['OldObjC']==1), rundata['Q_unchosen'], np.nan)
@@ -281,9 +288,16 @@ for subdir in [i for i in os.listdir(ROOTPATH) if '_output' in i]:
         for col in fb_evs.columns:
             if col not in ['onset','duration']:
                 write_df_to_ev(fb_evs[['onset','duration',col]], path = subdirpath+f'/EV_files/{col}_run{run}.txt')
+                paths_to_server.append(subdirpath+f'/EV_files/{col}_run{run}.txt')
         for col in choice_evs.columns:
             if col not in ['onset','duration_const', 'duration_rt']:
                 # write constant duration version
                 write_df_to_ev(choice_evs[['onset','duration_const',col]], path = subdirpath+f'/EV_files/{col}_run{run}.txt')
-                # rt duration version
-                write_df_to_ev(choice_evs[['onset','duration_rt',col]], path = subdirpath+f'/EV_files/RTDur/{col}_run{run}.txt')
+                paths_to_server.append(subdirpath+f'/EV_files/{col}_run{run}.txt')
+                # # rt duration version
+                # write_df_to_ev(choice_evs[['onset','duration_rt',col]], path = subdirpath+f'/EV_files/RTDur/{col}_run{run}.txt')
+
+
+with open('/Users/chrisiyer/_Current/lab/code/hybrid_rl/files_to_ginsburg.txt', 'w') as f:
+    for p in paths_to_server:
+        f.write(p + '\n')
