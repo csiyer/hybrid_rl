@@ -14,12 +14,14 @@ nibs_dir = f'{bids_dir}/derivatives/nibetaseries'
 sub_conversion = pd.read_csv('./data/n31_subject_list.txt')
 beh = pd.read_csv('./data/hybrid_data.csv')
 
+
 def get_beh_data(sub_num):
     """behavioral data"""
     bids_sub_num = f'sub-hybrid{sub_num:02d}'
     orig_sub_id = sub_conversion.original[sub_conversion.bids == bids_sub_num].iloc[0]
     orig_sub_num = int(orig_sub_id[-2:])
     return beh[(beh.Sub==orig_sub_num) & (~pd.isna(beh.RT))].reset_index()
+
 
 def get_roi_patterns(sub_num, trial_type, roi):
     """Retrieve pre-extracted and normalized hippocampal patterns for a sub/trial type (choice/fb)
@@ -32,6 +34,7 @@ def get_roi_patterns(sub_num, trial_type, roi):
         run_patterns.append(np.load(path))
     return np.hstack(run_patterns).T # timepoints x voxels
 
+
 def get_all_roi_patterns(roi):
     all_patterns = {}
     for sub_num in range(1,32):
@@ -41,16 +44,18 @@ def get_all_roi_patterns(roi):
         }
     return all_patterns
 
+
 def get_corr_matrix(all_patterns, sub_num, trial_type):
     # correlate trials of type tt1 with trials of type tt2
     if trial_type == 'choice' or trial_type == 'fb':
-        hipp_patterns = all_patterns[sub_num][trial_type]
-        return np.corrcoef(hipp_patterns)
+        patterns = all_patterns[sub_num][trial_type]
+        return np.corrcoef(patterns)
     else: # correlate retrieval choice w encoding feedback
         n_trials = all_patterns[sub_num]['choice'].shape[0]
-        hipp_patterns_choice = all_patterns[sub_num]['choice']
-        hipp_patterns_fb = all_patterns[sub_num]['fb']
-        return np.corrcoef(hipp_patterns_choice, hipp_patterns_fb)[:n_trials, n_trials:]
+        patterns_choice = all_patterns[sub_num]['choice']
+        patterns_fb = all_patterns[sub_num]['fb']
+        return np.corrcoef(patterns_choice, patterns_fb)[:n_trials, n_trials:]
+
 
 def get_dist_matrix(all_patterns, sub_num, trial_type):
     if trial_type in ['choice', 'fb']:
@@ -62,23 +67,104 @@ def get_dist_matrix(all_patterns, sub_num, trial_type):
         return cdist(patterns_choice, patterns_fb, metric='euclidean') # mat[i,j] gives distance from CHOICE[i] to FB[j]
 
 
+
+######## for permutation testing
+
+def get_encoding_retrieval_indices(sub_num, only_unlucky=False, return_values=False):
+    """
+    find retrieval trials and their corresponding encoding trials
+    exclude pairs with encoding trials having no response
+    """
+    beh_data = get_beh_data(sub_num)
+    encoding_indices, retrieval_indices, value = [],[],[]
+    for i in range(len(beh_data)):
+        if beh_data.OldT.iloc[i] == 1:
+            enc_trial = beh_data.index[beh_data.Trial == beh_data.encTrialNum.iloc[i]] # idx of row whose Trial is the encTrialNum of retrieval trial
+            if len(enc_trial) == 1: # this rules out instances when the encoding trial was invalid (no response) and is therefore absent in beh_data
+                if not only_unlucky or beh_data.Q_diff.iloc[i] < 0: # either including all trials, or if not, just the unlucky retrieval choices
+                    encoding_indices.append(enc_trial[0])
+                    retrieval_indices.append(i)
+                    value.append(beh_data.ObjPP.iloc[i])
+    if return_values:
+        return np.array(encoding_indices), np.array(retrieval_indices), np.array(value)
+    return np.array(encoding_indices), np.array(retrieval_indices)
+
+
+def permute_retrieval_indices(encoding_indices, retrieval_indices, values_to_match=None, 
+                              min_sep=None, max_sep=None, max_tries=1000, group_max_tries=300):
+    """
+    Shuffle encoding-retrieval pairs so they all have new pairs.
+    Return: permuted retrieval indices satisfying constraint
+    values_to_match: if provided, only permutes within value (i.e., encoding trials are paired with retrieval trials with same ObjPP)
+    """
+    if values_to_match is None:
+        values_to_match = np.zeros_like(retrieval_indices)  # all same group
+
+    for _ in range(max_tries):
+        permuted = retrieval_indices.copy()
+        success = True  # track if all groups succeeded
+
+        for val in np.unique(values_to_match):
+            group_indices = np.where(values_to_match == val)[0]
+            group_retrievals = retrieval_indices[group_indices]
+            group_encodings = encoding_indices[group_indices]
+
+            if len(group_indices) < 2:
+                continue  # only 1 trial with this value, do nothing for this group
+
+            for _ in range(group_max_tries):
+                shuffled = np.random.permutation(group_retrievals)
+
+                # ensure no preserved pairing
+                if np.any(shuffled == group_retrievals):
+                    continue
+                # check distance constraint
+                if min_sep is not None and max_sep is not None:
+                    dists = np.abs(shuffled - group_encodings)
+                    if not np.all((dists >= min_sep) & (dists <= max_sep)):
+                        continue
+
+                # valid permutation for this group, break the for loop
+                permuted[group_indices] = shuffled
+                break
+            else:
+                # group failed too many times — give up on this whole attempt
+                success = False
+                break
+
+        if success:
+            return permuted
+
+    raise ValueError(f"Could not generate valid permutation after {max_tries} attempts.")
+
+
+
 ################# PLOTTING
 
-def simple_violin(x1, x2, **kwargs):
-    plt.figure(figsize=(6, 4))
+def simple_violin(x1, x2=None, **kwargs):
+    figsize = kwargs['figsize'] if 'figsize' in kwargs else (6,4)
+    dpi = kwargs['dpi'] if 'dpi' in kwargs else None 
+    plt.figure(figsize=figsize, dpi=dpi)
     if 'title' in kwargs:
         plt.title(kwargs['title'])
-    plt.scatter(np.zeros_like(x1), x1, color="blue", label=kwargs['x1_label'], alpha=0.7)
-    plt.scatter(np.ones_like(x2), x2, color="orange", label=kwargs['x2_label'], alpha=0.7)
-    sns.violinplot([x1,x2], palette=['blue','orange'], inner=None, linewidth=1, alpha = 0.5)
-    plt.xticks([0, 1], [kwargs['x1_label'], kwargs['x2_label'] ] )
+    plt.scatter(np.zeros_like(x1), x1, color="blue",alpha=0.9,linewidths=1,edgecolors='black')
+    if x2:
+        plt.scatter(np.ones_like(x2), x2, color="orange", alpha=0.7)
+        sns.violinplot([x1,x2], palette=['purple','orange'], inner=None, linewidth=1, alpha = 0.5)
+        plt.xticks([0, 1], [kwargs['x1_label'], kwargs['x2_label'] ] )
+    else:
+        sns.violinplot(x1, color='blue', inner=None, linewidth=1, linecolor='blue',alpha = 0.4)        
+        # plt.xticks([0, 1], [kwargs['x1_label'], kwargs['x2_label'] ] )
     if 'xlabel' in kwargs: plt.xlabel(kwargs['xlabel'])
     if 'ylabel' in kwargs: plt.ylabel(kwargs['ylabel'])
     if 'xlim' in kwargs: plt.xlim(kwargs['xlim'])
+    xmin, xmax = plt.xlim()
+    if 'chancelabel' in kwargs:
+        plt.hlines(y=0, xmin=xmin, xmax=xmax, color='gray', linewidth=2, linestyles='--', label=kwargs['chancelabel'])
     if 'ylim' in kwargs: plt.ylim(kwargs['ylim'])
     if 'yticks' in kwargs: plt.yticks(kwargs['yticks'])
     # if 'yticklabels' in kwargs: plt.yticklabels(kwargs['yticklabels'])
-    if 'legend' in kwargs: plt.legend()
+    if 'legend' in kwargs: plt.legend(loc='lower right')
     # plt.grid(True)
     plt.show()
 
@@ -150,23 +236,25 @@ def simple_plot(arr,x=None,xlabel='',ylabel='',title=''):
     plt.show()
 
 
-def plot_enc_kernel(kernel_array1, kernel_array2=None, label1='', label2='',
+def plot_enc_kernel(arr1, arr2=None, label1='', label2='',
                     xlabel="Distance from encoding trial (choice)",
                     ylabel="Pattern similarity to retrieval choice",
                     title=""):
     # for each timepoint relative to encoding trial, plot across-subject mean pattern similarity
-    n_subs = len(kernel_array1)
-    arr1_means = np.mean(kernel_array1, axis=0)
-    arr1_errors = np.std(kernel_array1, axis=0) / np.sqrt(n_subs)  # Standard Error of the Mean (SEM)
+    n_subs = len(arr1)
+    arr1_means = np.mean(arr1, axis=0)
+    arr1_errors = np.std(arr1, axis=0) / np.sqrt(n_subs)  # Standard Error of the Mean (SEM)
     x = np.arange(len(arr1_means)) - len(arr1_means) // 2
-    plt.figure(figsize=(8, 5))
-    plt.plot(x, arr1_means, color='b', linewidth=0.5)
-    plt.errorbar(x, arr1_means, yerr=arr1_errors, fmt='o', capsize=5, label=label1, color='b')
-    if kernel_array2:
-        arr2_means = np.mean(kernel_array2, axis=0)
-        arr2_errors = np.std(kernel_array2, axis=0) / np.sqrt(n_subs)  # Standard Error of the Mean (SEM)
-        plt.plot(x, arr2_means, color='orange', linewidth=0.5)
-        plt.errorbar(x, arr2_means, yerr=arr2_errors, fmt='o', capsize=5, label=label2, color='orange')
+    plt.figure(figsize=(5, 5))
+    plt.plot(x, arr1_means, '-o', linewidth=4, markersize=6, markeredgecolor='black')
+    plt.fill_between(x, arr1_means+arr1_errors, arr1_means-arr1_errors, color='gray',alpha=0.5)
+
+    if arr2:
+        arr2_means = np.mean(arr2, axis=0)
+        arr2_errors = np.std(arr2, axis=0) / np.sqrt(n_subs)  # Standard Error of the Mean (SEM)
+        plt.plot(x, arr2_means, '-o', color='orange', linewidth=4, markersize=6, markeredgecolor='black')
+        plt.fill_between(x, arr2_means+arr2_errors, arr2_means-arr2_errors, color='gray',alpha=0.5)
+        # plt.errorbar(x, arr2_means, yerr=arr2_errors, fmt='o', capsize=5, label=label2, color='orange')
         plt.legend()
     plt.xticks(x, labels=x.astype(str))
     plt.xlabel(xlabel)
@@ -174,6 +262,37 @@ def plot_enc_kernel(kernel_array1, kernel_array2=None, label1='', label2='',
     plt.title(title)
     plt.grid(True, linestyle="--", alpha=0.5)
     plt.show()
+
+def plot_enc_kernel_double(arr1, arr2, 
+                           second_arr1=None, second_arr2=None,
+                           labels=['',''], titles=['',''], xlabels=['',''],figtitle="",
+                           ylabel='Pattern Similarity'):
+    # for each timepoint relative to encoding trial, plot across-subject mean pattern similarity
+    n_subs = len(arr1)
+    fig,ax = plt.subplots(1,2, sharey=True, figsize=(9,4),dpi=200)
+    fig.suptitle(figtitle)
+
+    for i,(arr,second_arr,xlabel,title) in enumerate(zip([arr1, arr2],[second_arr1,second_arr2],xlabels,titles)):
+        means = np.mean(arr, axis=0)
+        x = np.arange(len(means)) - len(means) // 2
+        ax[i].plot(x, means, '-o', linewidth=4, markersize=6, markeredgecolor='black', label=labels[0])
+        if second_arr:
+            ax[i].plot(x, np.mean(second_arr,axis=0), '-o', color='orange',linewidth=4, markersize=6, markeredgecolor='black', label=labels[1])
+
+        ax[i].vlines(x=0,ymin=-0.015,ymax=0.025, color='gray',linestyle='--',linewidth=3,alpha=0.5)
+        ax[i].set_xticks(x, labels=x.astype(str))
+        ax[i].set_xlabel(xlabel)
+        ax[i].set_title(title)
+        ax[i].grid(True, linestyle="--", alpha=0.5)
+        ax[i].set_ylim(-0.015,0.025)
+        if i==0:
+            ax[i].set_ylabel(ylabel)
+            # ax[i].legend(loc='upper left')
+    
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    plt.show()
+
 
 def plot_ers_delay(delay_dict, title, xlabel):
     # for each timepoint relative to encoding trial, plot across-subject mean pattern similarity

@@ -152,44 +152,140 @@ def fit_logistic(x,y):
     y_fit = logistic(x_fit, *popt)
     return x_fit, y_fit
 
-def plot_separate_subjects(data, x_cols, y_cols, x_texts, y_texts, logistic_fit, title=''):
-    data = data.copy()
-    fig,axs = plt.subplots(1,3, figsize=(12,4))
-    fig.suptitle(title)
 
-    for ax,x_col,y_col,x_text,y_text in zip(axs,x_cols,y_cols,x_texts,y_texts):
+def episodic_incremental(data, x_cols, y_cols, x_texts, y_texts, logistic_fit=False, shaded=None, ylim=None, subtitles = ['','',''], title='',**kwargs):
+    n_plots = len(x_cols)
+    fig,axs = plt.subplots(1,n_plots, figsize=(n_plots*4,4), dpi=200)
+    fig.suptitle(title)
+    if 'data2' in kwargs:
+        data_arr = [data.copy(), kwargs['data2'].copy()]
+    else: 
+        data_arr = [data.copy(), data.copy()]
+
+    for i,(data, ax,x_col,y_col,x_text,y_text,subtitle) in enumerate(zip(data_arr,axs,x_cols,y_cols,x_texts,y_texts,subtitles)):
         # bin if necessary
         if len(data[x_col].unique()) > 20:
-            xmin, xmax  = (min(data[x_col]), max(data[x_col]))
-            bins = np.linspace(xmin,xmax,11)
-            bin_centers = bins[:-1] + np.diff(bins) / 2 
-            data[x_col] = pd.cut(data[x_col], bins, labels=bin_centers).astype(float)
+            data[x_col] = pd.qcut(data[x_col], q=6, duplicates='drop')
+            # replace intervals with midpoints
+            data[x_col] = data[x_col].apply(lambda x: x.mid).to_numpy()
 
-        group_data = data.groupby(["Sub", x_col])[y_col].mean().reset_index()
-        # plot subject data
-        for sub in group_data["Sub"].unique():
-            sub_data = group_data[group_data["Sub"] == sub]
-            x = sub_data[x_col].values
-            y = sub_data[y_col].values
-            x = x[~np.isnan(y)]
-            y = y[~np.isnan(y)]
-            if logistic_fit:
-                x_fit, y_fit = fit_logistic(x,y)
-                ax.plot(x_fit, y_fit, alpha=0.5)
-            else:
-                ax.plot(x, y, alpha=0.3)
-        # plot mean
-        mean_data = data.groupby(x_col)[y_col].mean().reset_index()
-        if logistic_fit:
-            x_mean_fit, y_mean_fit = fit_logistic(x = mean_data[x_col].values, y = mean_data[y_col].values)
-            ax.plot(x_mean_fit, y_mean_fit, color='black', linewidth=3)
+        group_data = data.groupby(["Sub", x_col],observed=True)[y_col].mean().reset_index()
+        mean_data = group_data.groupby(x_col)[y_col].agg(['mean','sem']).reset_index()
+        ax.hlines(y=0.5, xmin=mean_data[x_col].min(), xmax=mean_data[x_col].max(), linestyle='--',color='gray',linewidth=3, label='chance')
+        ax.plot(mean_data[x_col].values, mean_data['mean'], color='black', linewidth=5)
+        if shaded:
+            # alternate version with shaded SEM instead of subject lines
+            ax.fill_between(mean_data[x_col],mean_data['mean']-mean_data['sem'], mean_data['mean']+mean_data['sem'],alpha=0.5)
         else:
-            ax.plot(mean_data[x_col].values, mean_data[y_col].values, color='black', linewidth=4)
-
+            # plot subject data
+            for sub in group_data["Sub"].unique():
+                sub_data = group_data[group_data["Sub"] == sub]
+                x = sub_data[x_col].values
+                y = sub_data[y_col].values
+                x = x[~np.isnan(y)]
+                y = y[~np.isnan(y)]
+                if logistic_fit:
+                    # x_mean_fit, y_mean_fit = fit_logistic(x = mean_data[x_col].values, y = mean_data[y_col].values)
+                    # ax.plot(x_mean_fit, y_mean_fit, color='black', linewidth=5)
+                    x_fit, y_fit = fit_logistic(x,y)
+                    ax.plot(x_fit, y_fit, alpha=0.2)
+                else:
+                    ax.plot(x, y, alpha=0.2)
+        
+        ax.set_title(subtitle, fontsize=14)
         ax.set_xlabel(x_text, fontsize=12)
         ax.set_ylabel(y_text, fontsize=12)
-        ax.set_title(title, fontsize=14)
-        ax.set_ylim((0,1.1))
+        ax.set_yticks([0,0.2,0.4,0.6,0.8, 1])
+        if ylim:
+            ax.set_ylim(ylim)
+            ticks = [i for i in [0,0.2,0.4,0.6,0.8, 1] if i >= ylim[0] and i <= ylim[1]]
+            ax.set_yticks(ticks)
+        if i == n_plots-1:
+            ax.legend(loc='lower right')
+        ax.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
+
+
+def rt_plot(data, x_cols, x_texts, nbins=11, subtitles = ['','',''], title=''):
+    data = data[~pd.isna(data.RT)].copy()
+    fig,axs = plt.subplots(1,2, figsize=(4,3),sharey=True,dpi=200)
+    fig.suptitle(title)
+
+    for i,(ax,x_col,x_text,subtitle) in enumerate(zip(axs,x_cols,x_texts,subtitles)):
+        # bin if necessary
+        if len(data[x_col].unique()) > 25:
+            data[x_col] = pd.qcut(data[x_col], q=nbins, duplicates='drop')
+            # replace intervals with midpoints
+            data[x_col] = data[x_col].apply(lambda x: x.mid)
+
+        # plot mean
+        group_data = data.groupby(x_col, observed=True)['RT'].agg(['count','mean','sem'])
+        ax.plot(group_data['mean'], linestyle='-', color='black', linewidth=4)
+        # add sem
+        ax.fill_between(group_data['mean'].keys(), 
+                        (group_data['mean'] + group_data['sem']), 
+                        (group_data['mean'] - group_data['sem']),
+                        alpha=0.5)
+
+        ax.set_ylim(700,950)
+        if i==0:
+            ax.set_ylabel('Response Time (ms)', fontsize=10)
+            ax.set_xticks([-0.8,0,0.8])
+            # ax.set_xticklabels([])
+        else:
+            ax.set_xticks([0,0.5,1.0])
+        ax.set_title(subtitle, fontsize=10)
+        ax.set_xlabel(x_text, fontsize=10)
+        ax.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def encoding_plot(data, x_cols, x_texts,nbins=11,subtitles = ['',''], title='',):
+    data = data.copy()
+    fig,axs = plt.subplots(1,3, figsize=(8,3),dpi=200)
+    fig.suptitle(title)
+
+    for i,(ax,x_col,x_text,subtitle) in enumerate(zip(axs,x_cols,x_texts,subtitles)):
+        # bin if necessary
+        if len(data[x_col].unique()) > 25:
+            data[x_col] = pd.qcut(data[x_col], q=nbins, duplicates='drop')
+            # replace intervals with midpoints
+            data[x_col] = data[x_col].apply(lambda x: x.mid)
+
+        # plot mean
+        group_data = data.groupby(x_col, observed=True)['OptObj'].agg(['count','mean','sem'])
+        ax.plot(group_data['mean'], linestyle='-', color='black', linewidth=4)
+        # add sem
+        ax.fill_between(group_data['mean'].keys(), 
+                        (group_data['mean'] + group_data['sem']), 
+                        (group_data['mean'] - group_data['sem']),
+                        alpha=0.5)
+
+        # ax.set_ylim(700,950)
+        if i==0:
+            ax.set_ylabel('Probability of Memory-Optimal \nChoice at Retrieval', fontsize=12)
+            ax.set_ylim(0.45,0.71)
+            ax.set_yticks([0.5,0.6,0.7])
+            ax.set_xticks([0.2,0.4,0.6,0.8])
+        elif i == 1:
+            ax.set_ylim(0.45,0.71)
+            ax.set_yticks([0.5,0.6,0.7])
+            # ax.set_xticks([0.2,0.4,0.6,0.8])
+        else:
+            ax.set_ylim(0.35,0.65)
+            ax.set_xticks([0,10,20])
+            ax.set_yticks([0.4,0.5,0.6])
+
+        # ax.set_xticks([0,0.5,1.0])
+        # ax.set_xticks([-1,-0.5,0,0.5,1])
+        ax.set_title(subtitle, fontsize=12)
+        ax.set_xlabel(x_text, fontsize=12)
+        ax.grid(True)
 
     plt.tight_layout()
     plt.show()
