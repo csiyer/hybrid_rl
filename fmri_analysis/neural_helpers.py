@@ -146,7 +146,7 @@ def simple_violin(x1, x2=None, **kwargs):
     dpi = kwargs['dpi'] if 'dpi' in kwargs else None 
     plt.figure(figsize=figsize, dpi=dpi)
     if 'title' in kwargs:
-        plt.title(kwargs['title'])
+        plt.title(kwargs['title'], fontsize=20)
     plt.scatter(np.zeros_like(x1), x1, color="blue",alpha=0.9,linewidths=1,edgecolors='black')
     if x2:
         plt.scatter(np.ones_like(x2), x2, color="orange", alpha=0.7)
@@ -155,8 +155,8 @@ def simple_violin(x1, x2=None, **kwargs):
     else:
         sns.violinplot(x1, color='blue', inner=None, linewidth=1, linecolor='blue',alpha = 0.4)        
         # plt.xticks([0, 1], [kwargs['x1_label'], kwargs['x2_label'] ] )
-    if 'xlabel' in kwargs: plt.xlabel(kwargs['xlabel'])
-    if 'ylabel' in kwargs: plt.ylabel(kwargs['ylabel'])
+    if 'xlabel' in kwargs: plt.xlabel(kwargs['xlabel'], fontsize=18)
+    if 'ylabel' in kwargs: plt.ylabel(kwargs['ylabel'], fontsize=18)
     if 'xlim' in kwargs: plt.xlim(kwargs['xlim'])
     xmin, xmax = plt.xlim()
     if 'chancelabel' in kwargs:
@@ -269,8 +269,9 @@ def plot_enc_kernel_double(arr1, arr2,
                            ylabel='Pattern Similarity'):
     # for each timepoint relative to encoding trial, plot across-subject mean pattern similarity
     n_subs = len(arr1)
-    fig,ax = plt.subplots(1,2, sharey=True, figsize=(9,4),dpi=200)
-    fig.suptitle(figtitle)
+    # fig,ax = plt.subplots(1,2, sharey=True, figsize=(9,4),dpi=200)
+    fig,ax = plt.subplots(2,1, sharex=True,figsize=(4,5),dpi=200)
+    fig.suptitle(figtitle,fontsize=20)
 
     for i,(arr,second_arr,xlabel,title) in enumerate(zip([arr1, arr2],[second_arr1,second_arr2],xlabels,titles)):
         means = np.mean(arr, axis=0)
@@ -281,12 +282,12 @@ def plot_enc_kernel_double(arr1, arr2,
 
         ax[i].vlines(x=0,ymin=-0.015,ymax=0.025, color='gray',linestyle='--',linewidth=3,alpha=0.5)
         ax[i].set_xticks(x, labels=x.astype(str))
-        ax[i].set_xlabel(xlabel)
-        ax[i].set_title(title)
+        ax[i].set_xlabel(xlabel, fontsize=14)
+        ax[i].set_title(title, fontsize=14)
         ax[i].grid(True, linestyle="--", alpha=0.5)
         ax[i].set_ylim(-0.015,0.025)
-        if i==0:
-            ax[i].set_ylabel(ylabel)
+        if i==1:
+            ax[i].set_ylabel(ylabel, fontsize=16)
             # ax[i].legend(loc='upper left')
     
     plt.grid(True, linestyle="--", alpha=0.5)

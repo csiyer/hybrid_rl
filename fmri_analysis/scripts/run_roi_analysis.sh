@@ -16,7 +16,7 @@ roiname=$3
 HOME=/burg/dslab/users/csi2108/hybrid_mri_CSI
 cope_pattern=$HOME/group_analyses/Subject_Level_FixEff/"$modelname"_??.gfeat/cope$copenum.feat/stats/cope1.nii.gz
 ROI=$HOME/masks/bl_"$roiname"_hipp_prob.nii.gz
-OUTFILE=$HOME/roi_analysis/"$modelname"_cope"$copenum"_$roi.txt
+OUTFILE=$HOME/roi_analysis/"$modelname"_cope"$copenum"_$roiname.txt
 > $OUTFILE  # Clear output file
 
 for sub_z in $cope_pattern; do

@@ -202,7 +202,7 @@ def episodic_incremental(data, x_cols, y_cols, x_texts, y_texts, logistic_fit=Fa
             ax.set_yticks(ticks)
         if i == n_plots-1:
             ax.legend(loc='lower right')
-        ax.grid(True)
+        # ax.grid(True)
 
     plt.tight_layout()
     plt.show()
@@ -233,10 +233,10 @@ def rt_plot(data, x_cols, x_texts, nbins=11, subtitles = ['','',''], title=''):
         ax.set_ylim(700,950)
         if i==0:
             ax.set_ylabel('Response Time (ms)', fontsize=10)
-            ax.set_xticks([-0.8,0,0.8])
+            ax.set_xticks([0,0.5,1.0])
             # ax.set_xticklabels([])
         else:
-            ax.set_xticks([0,0.5,1.0])
+            ax.set_xticks([-0.8,0,0.8])
         ax.set_title(subtitle, fontsize=10)
         ax.set_xlabel(x_text, fontsize=10)
         ax.grid(True)
@@ -248,7 +248,7 @@ def rt_plot(data, x_cols, x_texts, nbins=11, subtitles = ['','',''], title=''):
 def encoding_plot(data, x_cols, x_texts,nbins=11,subtitles = ['',''], title='',):
     data = data.copy()
     fig,axs = plt.subplots(1,3, figsize=(8,3),dpi=200)
-    fig.suptitle(title)
+    fig.suptitle(title, fontsize=16)
 
     for i,(ax,x_col,x_text,subtitle) in enumerate(zip(axs,x_cols,x_texts,subtitles)):
         # bin if necessary
@@ -268,7 +268,7 @@ def encoding_plot(data, x_cols, x_texts,nbins=11,subtitles = ['',''], title='',)
 
         # ax.set_ylim(700,950)
         if i==0:
-            ax.set_ylabel('Probability of Memory-Optimal \nChoice at Retrieval', fontsize=12)
+            ax.set_ylabel('Probability of \nMemory-Optimal \nChoice at Retrieval', fontsize=12)
             ax.set_ylim(0.45,0.71)
             ax.set_yticks([0.5,0.6,0.7])
             ax.set_xticks([0.2,0.4,0.6,0.8])
@@ -283,7 +283,7 @@ def encoding_plot(data, x_cols, x_texts,nbins=11,subtitles = ['',''], title='',)
 
         # ax.set_xticks([0,0.5,1.0])
         # ax.set_xticks([-1,-0.5,0,0.5,1])
-        ax.set_title(subtitle, fontsize=12)
+        ax.set_title(subtitle, fontsize=18)
         ax.set_xlabel(x_text, fontsize=12)
         ax.grid(True)
 
