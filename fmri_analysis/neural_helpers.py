@@ -266,11 +266,14 @@ def plot_enc_kernel(arr1, arr2=None, label1='', label2='',
 def plot_enc_kernel_double(arr1, arr2, 
                            second_arr1=None, second_arr2=None,
                            labels=['',''], titles=['',''], xlabels=['',''],figtitle="",
-                           ylabel='Pattern Similarity'):
+                           ylabel='Pattern Similarity', vertical=False):
     # for each timepoint relative to encoding trial, plot across-subject mean pattern similarity
     n_subs = len(arr1)
-    # fig,ax = plt.subplots(1,2, sharey=True, figsize=(9,4),dpi=200)
-    fig,ax = plt.subplots(2,1, sharex=True,figsize=(4,5),dpi=200)
+    if vertical:
+        fig,ax = plt.subplots(2,1, sharey=True, figsize=(4,5),dpi=300)
+        ylabel='                              Pattern Similarity'
+    else:
+        fig,ax = plt.subplots(1,2, sharex=True,figsize=(8.5,4),dpi=300)
     fig.suptitle(figtitle,fontsize=20)
 
     for i,(arr,second_arr,xlabel,title) in enumerate(zip([arr1, arr2],[second_arr1,second_arr2],xlabels,titles)):
@@ -286,7 +289,7 @@ def plot_enc_kernel_double(arr1, arr2,
         ax[i].set_title(title, fontsize=14)
         ax[i].grid(True, linestyle="--", alpha=0.5)
         ax[i].set_ylim(-0.015,0.025)
-        if i==1:
+        if (i==1 and vertical) or (i==0 and not vertical):
             ax[i].set_ylabel(ylabel, fontsize=16)
             # ax[i].legend(loc='upper left')
     

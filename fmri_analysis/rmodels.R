@@ -2,6 +2,9 @@ library(lme4)
 library(ggplot2)
 library(interplot)
 library(lmerTest)
+library(showtext)
+font_add("Palatino", "/System/Library/Fonts/Supplemental/Palatino.ttc") # macOS path
+showtext_auto()  # Turn on showtext
 
 data <- read.csv('/Users/chrisiyer/_Current/lab/code/hybrid_rl/fmri_analysis/data/hybrid_data.csv')
 
@@ -41,7 +44,7 @@ model_feedback <- glmer(ChooseRed ~ oneback_outcome_red*RevT_c+(oneback_outcome_
 summary(model_feedback)
 
 p <- interplot(model_feedback, 'oneback_outcome_red', 'RevT_c') +
-  theme_classic() + ggtitle('     Deck Feedback')+
+  theme_classic(base_family = "Palatino") + ggtitle('     Deck Feedback')+
   theme(text = element_text(size = 24), legend.position = "none") +
   xlab('Trials Since Reversal') +
   ylab('Effect of Last Deck \nFeedback on Next Choice') +
@@ -59,8 +62,8 @@ summary(model_encoding)
 
 
 q<-interplot(model_encoding,'ObjPP_c','EncRevT_c')+
-  theme_classic()+theme(text=element_text(size=24),legend.position="none")+
-  ggtitle('     Object Value')
+  theme_classic(base_family = "Palatino")+theme(text=element_text(size=24),legend.position="none")+
+  ggtitle('     Object Value')+
   #scale_fill_brewer(palette = "Blues",direction=-1)+
   xlab('Trials Since Reversal\nat Encoding')+ylab('Effect of Object Value \non Retrieval Choice')+
   scale_x_continuous(labels=c(2,7,12,17,25,30))

@@ -155,7 +155,7 @@ def fit_logistic(x,y):
 
 def episodic_incremental(data, x_cols, y_cols, x_texts, y_texts, logistic_fit=False, shaded=None, ylim=None, subtitles = ['','',''], title='',**kwargs):
     n_plots = len(x_cols)
-    fig,axs = plt.subplots(1,n_plots, figsize=(n_plots*4,4), dpi=200)
+    fig,axs = plt.subplots(1,n_plots, figsize=(n_plots*4,4), dpi=300)
     fig.suptitle(title)
     if 'data2' in kwargs:
         data_arr = [data.copy(), kwargs['data2'].copy()]
@@ -192,9 +192,9 @@ def episodic_incremental(data, x_cols, y_cols, x_texts, y_texts, logistic_fit=Fa
                 else:
                     ax.plot(x, y, alpha=0.2)
         
-        ax.set_title(subtitle, fontsize=14)
-        ax.set_xlabel(x_text, fontsize=12)
-        ax.set_ylabel(y_text, fontsize=12)
+        ax.set_title(subtitle, fontsize=24)
+        ax.set_xlabel(x_text, fontsize=18)
+        ax.set_ylabel(y_text, fontsize=18)
         ax.set_yticks([0,0.2,0.4,0.6,0.8, 1])
         if ylim:
             ax.set_ylim(ylim)
@@ -211,7 +211,7 @@ def episodic_incremental(data, x_cols, y_cols, x_texts, y_texts, logistic_fit=Fa
 
 def rt_plot(data, x_cols, x_texts, nbins=11, subtitles = ['','',''], title=''):
     data = data[~pd.isna(data.RT)].copy()
-    fig,axs = plt.subplots(1,2, figsize=(4,3),sharey=True,dpi=200)
+    fig,axs = plt.subplots(1,2, figsize=(4,3),sharey=True,dpi=300)
     fig.suptitle(title)
 
     for i,(ax,x_col,x_text,subtitle) in enumerate(zip(axs,x_cols,x_texts,subtitles)):
@@ -247,7 +247,7 @@ def rt_plot(data, x_cols, x_texts, nbins=11, subtitles = ['','',''], title=''):
 
 def encoding_plot(data, x_cols, x_texts,nbins=11,subtitles = ['',''], title='',):
     data = data.copy()
-    fig,axs = plt.subplots(1,3, figsize=(8,3),dpi=200)
+    fig,axs = plt.subplots(1,3, figsize=(8,3),dpi=300)
     fig.suptitle(title, fontsize=16)
 
     for i,(ax,x_col,x_text,subtitle) in enumerate(zip(axs,x_cols,x_texts,subtitles)):
@@ -268,7 +268,7 @@ def encoding_plot(data, x_cols, x_texts,nbins=11,subtitles = ['',''], title='',)
 
         # ax.set_ylim(700,950)
         if i==0:
-            ax.set_ylabel('Probability of \nMemory-Optimal \nChoice at Retrieval', fontsize=12)
+            ax.set_ylabel('Probability of \nMemory-Consistent \nChoice at Retrieval', fontsize=14)
             ax.set_ylim(0.45,0.71)
             ax.set_yticks([0.5,0.6,0.7])
             ax.set_xticks([0.2,0.4,0.6,0.8])
@@ -284,7 +284,7 @@ def encoding_plot(data, x_cols, x_texts,nbins=11,subtitles = ['',''], title='',)
         # ax.set_xticks([0,0.5,1.0])
         # ax.set_xticks([-1,-0.5,0,0.5,1])
         ax.set_title(subtitle, fontsize=18)
-        ax.set_xlabel(x_text, fontsize=12)
+        ax.set_xlabel(x_text, fontsize=14)
         ax.grid(True)
 
     plt.tight_layout()
