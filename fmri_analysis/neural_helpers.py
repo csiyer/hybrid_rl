@@ -1,11 +1,13 @@
 """Helper functions for neural_patterns.ipynb"""
 
-import os
+import os, pickle
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.spatial.distance import cdist
+from scipy.stats import spearmanr
+from tqdm import tqdm
 
 bids_dir = '/Volumes/shohamy-locker/chris/hybrid_mri_bids'
 nibs_dir = f'{bids_dir}/derivatives/nibetaseries'
@@ -23,26 +25,10 @@ def get_beh_data(sub_num):
     return beh[(beh.Sub==orig_sub_num) & (~pd.isna(beh.RT))].reset_index()
 
 
-def get_roi_patterns(sub_num, trial_type, roi):
-    """Retrieve pre-extracted and normalized hippocampal patterns for a sub/trial type (choice/fb)
-        We will concatenate all avaialble runs"""
-    sub_id = f'sub-hybrid{sub_num:02d}'
-    run_patterns = []
-    for run in range(1,6):
-        if sub_num==12 and run==4: continue
-        path = os.path.join(nibs_dir, sub_id, 'func', 'rois', f'{sub_id}_task-main_run-{run}_space-MNI152NLin2009cAsym_desc-{trial_type}_betaseries_{roi}_norm.npy')
-        run_patterns.append(np.load(path))
-    return np.hstack(run_patterns).T # timepoints x voxels
-
-
 def get_all_roi_patterns(roi):
-    all_patterns = {}
-    for sub_num in range(1,32):
-        all_patterns[sub_num] = {
-            'choice': get_roi_patterns(sub_num, 'choice', roi),
-            'fb': get_roi_patterns(sub_num, 'fb', roi),
-        }
-    return all_patterns
+    with open(f"{bids_dir}/derivatives/nibetaseries/{roi}_patterns.pkl", "rb") as f:
+        out = pickle.load(f)
+    return out
 
 
 def get_corr_matrix(all_patterns, sub_num, trial_type):
@@ -66,6 +52,46 @@ def get_dist_matrix(all_patterns, sub_num, trial_type):
         patterns_fb = all_patterns[sub_num]['fb']
         return cdist(patterns_choice, patterns_fb, metric='euclidean') # mat[i,j] gives distance from CHOICE[i] to FB[j]
 
+
+def rsa_value_models(patterns, trial_type, n_perm=1000):
+    """Compute within-value correlation and compare to subject-specific permuted null, return subject z-scores"""
+    z_scores = []
+
+    for subj in tqdm(range(1,32)):
+
+        beh_data = get_beh_data(subj)
+        if trial_type == 'fb':
+            mask = beh_data.OldT==0
+            y = beh_data[mask].Outcome.values # scalar reward values
+        elif trial_type == 'choice':
+            mask = beh_data.OldT==1 # old choices
+            y = beh_data[mask].ObjPP.values # scalar reward values
+        X = patterns[subj][trial_type][mask]
+
+        neural_rdm = 1 - np.corrcoef(X)
+        # model_rdm = (y[:, None] != y[None, :]).astype(float)
+        model_rdm = np.abs(y[:, None] - y[None, :]) # model is scalar difference in reward
+
+        # Vectorize upper triangle
+        triu_idx = np.triu_indices_from(neural_rdm, k=1)
+        neural_vec = neural_rdm[triu_idx]
+        model_vec = model_rdm[triu_idx]
+
+        # Observed correlations
+        rho_obs = spearmanr(neural_vec, model_vec).correlation
+
+        # Null distributions
+        rhos_null = []
+        for _ in range(n_perm):
+            y_shuff = np.random.permutation(y)
+            model_rdm_shuff = np.abs(y_shuff[:, None] - y_shuff[None, :])
+            rhos_null.append(spearmanr(neural_vec, model_rdm_shuff[triu_idx]).correlation)
+
+        # Compute z-scores
+        z = (rho_obs - np.mean(rhos_null)) / np.std(rhos_null)
+        z_scores.append(z)
+
+    return np.array(z_scores)
 
 
 ######## for permutation testing
@@ -263,17 +289,17 @@ def plot_enc_kernel(arr1, arr2=None, label1='', label2='',
     plt.grid(True, linestyle="--", alpha=0.5)
     plt.show()
 
-def plot_enc_kernel_double(arr1, arr2, 
+def plot_enc_kernel_double(arr1, arr2, dpi=None,
                            second_arr1=None, second_arr2=None,
                            labels=['',''], titles=['',''], xlabels=['',''],figtitle="",
                            ylabel='Pattern Similarity', vertical=False):
     # for each timepoint relative to encoding trial, plot across-subject mean pattern similarity
     n_subs = len(arr1)
     if vertical:
-        fig,ax = plt.subplots(2,1, sharey=True, figsize=(4,5),dpi=300)
+        fig,ax = plt.subplots(2,1, sharey=True, figsize=(4,5),dpi=dpi)
         ylabel='                              Pattern Similarity'
     else:
-        fig,ax = plt.subplots(1,2, sharex=True,figsize=(8.5,4),dpi=300)
+        fig,ax = plt.subplots(1,2, sharex=True,figsize=(8.5,4),dpi=dpi)
     fig.suptitle(figtitle,fontsize=20)
 
     for i,(arr,second_arr,xlabel,title) in enumerate(zip([arr1, arr2],[second_arr1,second_arr2],xlabels,titles)):
@@ -288,7 +314,7 @@ def plot_enc_kernel_double(arr1, arr2,
         ax[i].set_xlabel(xlabel, fontsize=14)
         ax[i].set_title(title, fontsize=14)
         ax[i].grid(True, linestyle="--", alpha=0.5)
-        ax[i].set_ylim(-0.015,0.025)
+        # ax[i].set_ylim(-0.015,0.025)
         if (i==1 and vertical) or (i==0 and not vertical):
             ax[i].set_ylabel(ylabel, fontsize=16)
             # ax[i].legend(loc='upper left')
