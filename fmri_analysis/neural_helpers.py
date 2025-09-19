@@ -167,31 +167,37 @@ def permute_retrieval_indices(encoding_indices, retrieval_indices, values_to_mat
 
 ################# PLOTTING
 
-def simple_violin(x1, x2=None, **kwargs):
+def simple_violin(x1, x2=None, NODATA=False, **kwargs):
     figsize = kwargs['figsize'] if 'figsize' in kwargs else (6,4)
     dpi = kwargs['dpi'] if 'dpi' in kwargs else None 
+    if NODATA:
+        alpha_point, alpha_violin = 0,0
+    else:
+        alpha_point, alpha_violin = 0.9, 0.4
     plt.figure(figsize=figsize, dpi=dpi)
-    if 'title' in kwargs:
-        plt.title(kwargs['title'], fontsize=20)
-    plt.scatter(np.zeros_like(x1), x1, color="blue",alpha=0.9,linewidths=1,edgecolors='black')
+    plt.title(kwargs.get('title'), fontsize=20)
+    plt.scatter(np.zeros_like(x1), x1, color="blue",alpha=alpha_point,linewidths=1,edgecolors='black')
     if x2:
         plt.scatter(np.ones_like(x2), x2, color="orange", alpha=0.7)
         sns.violinplot([x1,x2], palette=['purple','orange'], inner=None, linewidth=1, alpha = 0.5)
         plt.xticks([0, 1], [kwargs['x1_label'], kwargs['x2_label'] ] )
     else:
-        sns.violinplot(x1, color='blue', inner=None, linewidth=1, linecolor='blue',alpha = 0.4)        
+        sns.violinplot(x1, color='blue', inner=None, linewidth=1, linecolor='blue',alpha = alpha_violin)        
         # plt.xticks([0, 1], [kwargs['x1_label'], kwargs['x2_label'] ] )
-    if 'xlabel' in kwargs: plt.xlabel(kwargs['xlabel'], fontsize=18)
-    if 'ylabel' in kwargs: plt.ylabel(kwargs['ylabel'], fontsize=18)
-    if 'xlim' in kwargs: plt.xlim(kwargs['xlim'])
+    
+    plt.xlabel(kwargs.get('xlabel'), fontsize=18)
+    plt.xlim(kwargs.get('xlim'))
+    plt.xticks(kwargs.get('xticks'))
+    plt.ylabel(kwargs.get('ylabel'), fontsize=18)
+    plt.ylim(kwargs.get('ylim'))
+    plt.yticks(kwargs.get('yticks'))
     xmin, xmax = plt.xlim()
     if 'chancelabel' in kwargs:
         plt.hlines(y=0, xmin=xmin, xmax=xmax, color='gray', linewidth=2, linestyles='--', label=kwargs['chancelabel'])
-    if 'ylim' in kwargs: plt.ylim(kwargs['ylim'])
-    if 'yticks' in kwargs: plt.yticks(kwargs['yticks'])
-    # if 'yticklabels' in kwargs: plt.yticklabels(kwargs['yticklabels'])
     if 'legend' in kwargs: plt.legend(loc='lower right')
-    # plt.grid(True)
+    # ax = plt.gca()  # get current Axes
+    # ax.spines['top'].set_visible(False)
+    # ax.spines['right'].set_visible(False)
     plt.show()
 
 
@@ -289,11 +295,12 @@ def plot_enc_kernel(arr1, arr2=None, label1='', label2='',
     plt.grid(True, linestyle="--", alpha=0.5)
     plt.show()
 
-def plot_enc_kernel_double(arr1, arr2, dpi=None,
+def plot_enc_kernel_double(arr1, arr2, dpi=100,show_errors=True,
                            second_arr1=None, second_arr2=None,
                            labels=['',''], titles=['',''], xlabels=['',''],figtitle="",
-                           ylabel='Pattern Similarity', vertical=False):
+                           ylabel='Pattern Similarity', vertical=False, NODATA=False):
     # for each timepoint relative to encoding trial, plot across-subject mean pattern similarity
+    alpha,alpha_err=(0,0) if NODATA else (1,0.5)
     n_subs = len(arr1)
     if vertical:
         fig,ax = plt.subplots(2,1, sharey=True, figsize=(4,5),dpi=dpi)
@@ -305,7 +312,12 @@ def plot_enc_kernel_double(arr1, arr2, dpi=None,
     for i,(arr,second_arr,xlabel,title) in enumerate(zip([arr1, arr2],[second_arr1,second_arr2],xlabels,titles)):
         means = np.mean(arr, axis=0)
         x = np.arange(len(means)) - len(means) // 2
-        ax[i].plot(x, means, '-o', linewidth=4, markersize=6, markeredgecolor='black', label=labels[0])
+        ax[i].plot(x, means, '-o', linewidth=4, markersize=6, markeredgecolor='black', label=labels[0], alpha=alpha)
+
+        if show_errors:
+            errors = np.std(arr, axis=0) / np.sqrt(n_subs)  # Standard Error of the Mean (SEM)
+            ax[i].fill_between(x, means+errors, means-errors, color='gray',alpha=alpha_err)
+
         if second_arr:
             ax[i].plot(x, np.mean(second_arr,axis=0), '-o', color='orange',linewidth=4, markersize=6, markeredgecolor='black', label=labels[1])
 

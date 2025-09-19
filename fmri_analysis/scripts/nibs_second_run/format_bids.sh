@@ -6,14 +6,14 @@
 #SBATCH --time=01:00:00
 #SBATCH --mem=8G
 #SBATCH --cpus-per-task=1
+#SBATCH --array=1-32
 
-SLURM_ARRAY_TASK_ID=18
 module load FSL/6.0.5.2
 set -euo pipefail
 
 src_root="/burg/dslab/users/csi2108/hybrid_mri_CSI"
 dst_root="/burg/dslab/users/csi2108/hybrid_mri_bids/derivatives/fmriprep"
-map_file="$dst_root/n31_subject_list.txt"
+map_file="$src_root/n31_subject_list.txt"
 mkdir -p "$dst_root"
 target_space_label="MNI152NLin2009cAsym"
 
@@ -72,7 +72,7 @@ for run in {1..5}; do
                       --premat="$FUNC2HIGHRES" \
                       --interp=nn \
                       --out="$mask_dst"
-            rm -f "$mask_src"
+            # rm -f "$mask_src"
         fi
 
         # Confounds
