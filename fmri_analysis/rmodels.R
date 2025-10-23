@@ -27,7 +27,8 @@ looc_hybrid<-loo(log_lik_hybrid,cores=4)
 
 
 ###################################### RT
-model_rt <- lmer(RT ~ ObjPP + Q_diff + (1+ ObjPP + Q_diff | Sub), data=data)
+data['logRT'] <- log(data$RT)
+model_rt <- lmer(logRT ~ ObjPP + Q_diff + (1+ ObjPP + Q_diff | Sub), data=data)
 summary(model_rt)
 
 
@@ -39,7 +40,8 @@ data$PP_c <- data$PP - 0.5
 data$oneback_choosered_contrast <- ifelse(dplyr::lag(data$ChooseRed) == 1, 1, -1)
 data$oneback_outcome_red <- data$oneback_choosered_contrast*data$PP_c
 
-model_feedback <- glmer(ChooseRed ~ oneback_outcome_red*RevT_c+(oneback_outcome_red*RevT_c|Sub),
+model_feedback <- glmer(ChooseRed ~ oneback_outcome_red + RevT_c + oneback_outcome_red*RevT_c+
+                          (1+ oneback_outcome_red + RevT_c + oneback_outcome_red*RevT_c|Sub),
                         data=data, family=binomial)
 summary(model_feedback)
 
@@ -56,7 +58,8 @@ p
 
 
 
-model_encoding <- glmer(OldObjC ~ ObjPP_c*EncRevT_c + (ObjPP_c*EncRevT_c|Sub),
+model_encoding <- glmer(OldObjC ~ ObjPP_c + EncRevT_c + ObjPP_c*EncRevT_c + 
+                          (1+ ObjPP_c + EncRevT_c + ObjPP_c*EncRevT_c|Sub),
                         data=data,family=binomial)
 summary(model_encoding)
 
@@ -71,6 +74,11 @@ q$layers[[2]]$aes_params$fill <- "#1f77b4"
 # redraw the line so it goes on top
 q <- q + geom_line(data=q$data,aes(x = fake, y = coef1), color = "black", size = 3)
 q
+
+model_retrieval <- glmer(OldObjC ~ ObjPP_c + RevT_c + ObjPP_c*RevT_c + 
+                          (1+ ObjPP_c + RevT_c + ObjPP_c*RevT_c|Sub),
+                        data=data,family=binomial)
+summary(model_retrieval)
 
 
 ###################################### Reversal learning
@@ -103,8 +111,8 @@ data$PE_enc_sign <- sign(data$PE_enc)
 data$PE_prevtrial_enc_unsigned <- abs(data$PE_prevtrial_enc)
 data$PE_prevtrial_enc_sign <- sign(data$PE_prevtrial_enc)
 
-
-model_submem <- glmer(OptObj ~ ObjPP + Q_chosen_enc + PE_enc + PE_prevtrial_enc + 
-                        EncRevT_c + Q_chosen + (1|Sub),data=data, family=binomial)
+# should i add ObjPP and Q_chosen of retrieval trial? I don't think so...
+model_submem <- glmer(OptObj ~ PE_enc + PE_prevtrial_enc + EncRevT_c + Q_chosen_enc + 
+                        (1+ PE_enc + PE_prevtrial_enc + EncRevT_c + Q_chosen_enc |Sub),
+                      data=data, family=binomial)
 summary(model_submem)
-

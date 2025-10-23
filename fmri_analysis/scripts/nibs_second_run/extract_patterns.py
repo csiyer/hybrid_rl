@@ -17,7 +17,7 @@ def process_one_sub(sub_num):
     run_brainmasks = [nib.load(f).get_fdata() > 0 for f in glob.glob(f'{preproc_base}/{sub_id}/func/*MNI*mask.nii.gz')]  # load brain masks
     sub_brainmask_bool = np.logical_and.reduce(run_brainmasks) # combine
 
-    for roi in ['hipp','vmpfc']:
+    for roi in ['hipp','vmpfc','a1']:
         outpath = os.path.join(subdir, f"{roi}_patterns_{sub_id}.pkl")
         if os.path.exists(outpath):
             continue
@@ -26,6 +26,8 @@ def process_one_sub(sub_num):
             roi_mask_file = '/burg/dslab/users/csi2108/hybrid_mri_CSI/masks/bl_hipp_binary.nii.gz'
         elif roi == 'vmpfc':
             roi_mask_file = '/burg/dslab/users/csi2108/hybrid_mri_CSI/masks/vmpfc_neurovault.nii'
+        elif roi == 'a1':
+            roi_mask_file = '/burg/dslab/users/csi2108/hybrid_mri_CSI/masks/bl_heschl_a1.nii.gz'
         # combine brain mask with roi mask (sometimes they are not totally overlapping)
         roi_mask_bool = nib.load(roi_mask_file).get_fdata().astype(bool)
         sub_mask_indices = np.where( sub_brainmask_bool & roi_mask_bool )
@@ -72,7 +74,7 @@ if __name__ == "__main__":
         # Parallel(n_jobs=8)( delayed(process_one_sub)(sub) for sub in range(1,32) )
 
     # combine into one big pickle
-    for roi in ['hipp','vmpfc']:
+    for roi in ['hipp','vmpfc','a1']:
         all_patterns={}
         for sub_num in range(1,32):
             sub = f'sub-hybrid{sub_num:02d}'

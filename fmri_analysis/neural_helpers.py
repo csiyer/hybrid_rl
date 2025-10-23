@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.spatial.distance import cdist
-from scipy.stats import spearmanr
+from scipy.stats import spearmanr, rankdata
 from tqdm import tqdm
 
 bids_dir = '/Volumes/shohamy-locker/chris/hybrid_mri_bids'
@@ -54,44 +54,75 @@ def get_dist_matrix(all_patterns, sub_num, trial_type):
 
 
 def rsa_value_models(patterns, trial_type, n_perm=1000):
-    """Compute within-value correlation and compare to subject-specific permuted null, return subject z-scores"""
-    z_scores = []
+    """Compute within-value correlation and compare to null from within-subject permutation, 
+    return group mean and null dist"""
 
-    for subj in tqdm(range(1,32)):
+    subj_data = [] # tuples with the neural and model RDMs
+    group_corrs = [] # z-transformed spearman rank coefficient between 
 
+    # precompute neural/model RDMs once per subject
+    for subj in range(1,32):
         beh_data = get_beh_data(subj)
         if trial_type == 'fb':
-            mask = beh_data.OldT==0
-            y = beh_data[mask].Outcome.values # scalar reward values
+            mask = beh_data.OldT == 0
+            y = beh_data[mask].Outcome.values
         elif trial_type == 'choice':
-            mask = beh_data.OldT==1 # old choices
-            y = beh_data[mask].ObjPP.values # scalar reward values
+            mask = beh_data.OldT == 1
+            y = beh_data[mask].ObjPP.values
+        elif trial_type == 'choice_new':
+            trial_type = 'choice'
+            mask = beh_data.OldT == 0
+            y = beh_data[mask].Outcome.values
+
+        
         X = patterns[subj][trial_type][mask]
 
-        neural_rdm = 1 - np.corrcoef(X)
-        # model_rdm = (y[:, None] != y[None, :]).astype(float)
-        model_rdm = np.abs(y[:, None] - y[None, :]) # model is scalar difference in reward
+        triu_idx = np.triu_indices(len(X), k=1)
+        neural_rdm_upper = (1 - np.corrcoef(X))[triu_idx]
+        model_rdm_upper = np.abs(y[:, None] - y[None, :])[triu_idx]
+        neural_ranked = rankdata(neural_rdm_upper)
+        model_ranked = rankdata(model_rdm_upper)
+        
+        rho = spearmanr(neural_ranked, model_ranked).correlation
+        group_corrs.append(np.arctanh(rho)) # Fisher z-transform
+        subj_data.append((neural_rdm_upper, model_rdm_upper))
 
-        # Vectorize upper triangle
-        triu_idx = np.triu_indices_from(neural_rdm, k=1)
-        neural_vec = neural_rdm[triu_idx]
-        model_vec = model_rdm[triu_idx]
+    # null distribution via permutation
+    group_null = []
+    for _ in tqdm(range(n_perm)):
+        subj_nulls = []
+        for neural,model in subj_data:
+            neural_shuffled = np.random.permutation(neural)
+            rho = np.corrcoef(neural_shuffled, model)[0,1]
+            subj_nulls.append(np.arctanh(rho)) # Fisher z-transform
+        group_null.append(np.mean(subj_nulls))
+    
+    return group_corrs, group_null
 
-        # Observed correlations
-        rho_obs = spearmanr(neural_vec, model_vec).correlation
 
-        # Null distributions
-        rhos_null = []
-        for _ in range(n_perm):
-            y_shuff = np.random.permutation(y)
-            model_rdm_shuff = np.abs(y_shuff[:, None] - y_shuff[None, :])
-            rhos_null.append(spearmanr(neural_vec, model_rdm_shuff[triu_idx]).correlation)
+def ers_model(patterns, trial_type='fb_to_choice', n_perm=1000):
+    """fb to choice ers helper"""
 
-        # Compute z-scores
-        z = (rho_obs - np.mean(rhos_null)) / np.std(rhos_null)
-        z_scores.append(z)
+    group_ers = []
+    subj_data = []
+    for subj in range(1,32):
+        corr_matrix = get_corr_matrix(patterns, subj, trial_type)
+        encoding_indices, retrieval_indices, values = get_encoding_retrieval_indices(subj, return_values=True)
+        trial_ers_z = np.arctanh(corr_matrix[retrieval_indices, encoding_indices])
+        group_ers.append(np.mean(trial_ers_z))
+        subj_data.append((corr_matrix, encoding_indices, retrieval_indices, values))
+    
+    group_null = []
+    for _ in tqdm(range(n_perm)):
+        subj_nulls = []
+        for corr_matrix, encoding_indices, retrieval_indices, values in subj_data:
+            permuted_retrieval = permute_retrieval_indices(encoding_indices, retrieval_indices, values_to_match = values)
+            perm_ers_z = np.arctanh(corr_matrix[permuted_retrieval, encoding_indices])
+            subj_nulls.append(np.mean(perm_ers_z))
+        group_null.append(np.mean(subj_nulls))
 
-    return np.array(z_scores)
+    return group_ers, group_null
+
 
 
 ######## for permutation testing
@@ -167,19 +198,19 @@ def permute_retrieval_indices(encoding_indices, retrieval_indices, values_to_mat
 
 ################# PLOTTING
 
-def simple_violin(x1, x2=None, NODATA=False, **kwargs):
+def simple_violin(x1, x2=[], NODATA=False, **kwargs):
     figsize = kwargs['figsize'] if 'figsize' in kwargs else (6,4)
     dpi = kwargs['dpi'] if 'dpi' in kwargs else None 
     if NODATA:
         alpha_point, alpha_violin = 0,0
     else:
-        alpha_point, alpha_violin = 0.9, 0.4
+        alpha_point, alpha_violin = 0.5, 0.4
     plt.figure(figsize=figsize, dpi=dpi)
     plt.title(kwargs.get('title'), fontsize=20)
-    plt.scatter(np.zeros_like(x1), x1, color="blue",alpha=alpha_point,linewidths=1,edgecolors='black')
-    if x2:
-        plt.scatter(np.ones_like(x2), x2, color="orange", alpha=0.7)
-        sns.violinplot([x1,x2], palette=['purple','orange'], inner=None, linewidth=1, alpha = 0.5)
+    plt.scatter(np.zeros_like(x1), x1, color="gray",alpha=alpha_point,linewidths=1,edgecolors='black')
+    if len(x2) > 0:
+        plt.scatter(np.ones_like(x2), x2, color="gray",alpha=alpha_point,linewidths=1,edgecolors='black')
+        sns.violinplot([x1,x2], color='blue', inner=None, linewidth=1, linecolor='blue',alpha = alpha_violin)
         plt.xticks([0, 1], [kwargs['x1_label'], kwargs['x2_label'] ] )
     else:
         sns.violinplot(x1, color='blue', inner=None, linewidth=1, linecolor='blue',alpha = alpha_violin)        
@@ -188,9 +219,12 @@ def simple_violin(x1, x2=None, NODATA=False, **kwargs):
     plt.xlabel(kwargs.get('xlabel'), fontsize=18)
     plt.xlim(kwargs.get('xlim'))
     plt.xticks(kwargs.get('xticks'))
-    plt.ylabel(kwargs.get('ylabel'), fontsize=18)
+    plt.ylabel(kwargs.get('ylabel'), fontsize=14)
     plt.ylim(kwargs.get('ylim'))
     plt.yticks(kwargs.get('yticks'))
+    if 'stars' in kwargs:
+        for sx,sy in kwargs['stars']:
+            plt.text(sx,sy,'*',fontsize=20)
     xmin, xmax = plt.xlim()
     if 'chancelabel' in kwargs:
         plt.hlines(y=0, xmin=xmin, xmax=xmax, color='gray', linewidth=2, linestyles='--', label=kwargs['chancelabel'])
@@ -198,6 +232,36 @@ def simple_violin(x1, x2=None, NODATA=False, **kwargs):
     # ax = plt.gca()  # get current Axes
     # ax.spines['top'].set_visible(False)
     # ax.spines['right'].set_visible(False)
+    plt.show()
+
+
+def null_violin(true_data, null_data, PLOTDATA=True, **kwargs):
+    figsize = kwargs.get('figsize', (5, 4))
+    dpi = kwargs.get('dpi', None)
+    color = kwargs.get('color', 'royalblue')
+    
+    mean_true = np.mean(true_data)
+    se_true = np.std(true_data, ddof=1) / np.sqrt(len(true_data))
+    
+    plt.figure(figsize=figsize, dpi=dpi)
+    plt.title(kwargs.get('title', ''), fontsize=20)
+    # plot null distribution in gray
+    sns.violinplot(y=null_data, color='lightgray', inner=None, linewidth=0, label='permuted null')
+    plt.axhline(y=np.percentile(null_data, 95), color='darkgray', linestyle='--', linewidth=1.5, label=f'95th percentile')
+    if PLOTDATA:
+        plt.errorbar(x=0, y=np.mean(true_data), yerr= np.std(true_data, ddof=1) / np.sqrt(len(true_data)),
+                     fmt='o', markersize=14, color=kwargs.get('color', 'royalblue'), capsize=6,
+                     elinewidth=2, label=kwargs.get('legend_label', None)
+        )
+    plt.ylabel(kwargs.get('ylabel', ''), fontsize=14)
+    plt.xlabel(kwargs.get('xlabel', ''), fontsize=14)
+    plt.xticks(kwargs.get('xticks', []))
+    if 'xlim' in kwargs: plt.ylim(kwargs['xlim'])
+    if 'ylim' in kwargs: plt.ylim(kwargs['ylim'])
+    if 'yticks' in kwargs: plt.yticks(kwargs['yticks'])
+    if 'legend' in kwargs and kwargs['legend']:
+        plt.legend(loc='lower right')
+    plt.tight_layout()
     plt.show()
 
 
@@ -397,3 +461,96 @@ def heatmap_grid(mats, title=''):
     plt.show()
 
 
+def double_decoding_plot(vmpfc_acc, hipp_acc, title='', dpi=None,stars=False):
+    
+    plt.figure(figsize=(2.5,3),dpi=dpi)
+    plt.title(title, fontsize=14)
+
+    plt.bar(0,np.mean(vmpfc_acc), color='blue',alpha=0.4,edgecolor='blue',linewidth=2)
+    plt.errorbar(x=0, y=np.mean(vmpfc_acc), yerr=np.std(vmpfc_acc), color='black', capsize=10, linewidth=2, markeredgewidth=2)
+    jitter = (np.random.rand(len(vmpfc_acc))-0.5)/5
+    plt.scatter(np.zeros(len(vmpfc_acc))+jitter, vmpfc_acc, color='gray', edgecolor='black', alpha=0.5)
+    
+    plt.bar(1,np.mean(hipp_acc), color='blue',alpha=0.4,edgecolor='blue',linewidth=2)
+    plt.errorbar(x=1, y=np.mean(hipp_acc), yerr=np.std(hipp_acc), color='black', capsize=10, linewidth=2, markeredgewidth=2)
+    plt.scatter(np.ones(len(vmpfc_acc))+jitter, vmpfc_acc, color='gray', edgecolor='black', alpha=0.5)
+
+    if stars:
+        plt.text(-0.05,0.3,'*',fontsize=20)
+        plt.text(0.95,0.3,'*',fontsize=20)
+    
+    plt.hlines(y=1/6, xmin=-0.5, xmax=1.5, linestyle='--', color='gray')
+    plt.ylim(0,0.4)
+    plt.xticks([0,1],labels=['vmPFC','hippocampus'])
+    plt.yticks([0,0.1,0.2,0.3,0.4])
+    plt.ylabel('Decoding accuracy')
+    plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+def rsa_value_models_OLD(patterns, trial_type, n_perm=1000):
+    """Compute within-value correlation and compare to subject-specific permuted null, return subject z-scores"""
+    z_scores = []
+
+    for subj in tqdm(range(1,32)):
+
+        beh_data = get_beh_data(subj)
+        if trial_type == 'fb':
+            mask = beh_data.OldT==0
+            y = beh_data[mask].Outcome.values # scalar reward values
+        elif trial_type == 'choice':
+            mask = beh_data.OldT==1 # old choices
+            y = beh_data[mask].ObjPP.values # scalar reward values
+        X = patterns[subj][trial_type][mask]
+
+        neural_rdm = 1 - np.corrcoef(X)
+        # model_rdm = (y[:, None] != y[None, :]).astype(float)
+        model_rdm = np.abs(y[:, None] - y[None, :]) # model is scalar difference in reward
+
+        # Vectorize upper triangle
+        triu_idx = np.triu_indices_from(neural_rdm, k=1)
+        neural_vec = neural_rdm[triu_idx]
+        model_vec = model_rdm[triu_idx]
+
+        # Observed correlations
+        rho_obs = spearmanr(neural_vec, model_vec).correlation
+
+        # Null distributions
+        rhos_null = []
+        for _ in range(n_perm):
+            y_shuff = np.random.permutation(y)
+            model_rdm_shuff = np.abs(y_shuff[:, None] - y_shuff[None, :])
+            rhos_null.append(spearmanr(neural_vec, model_rdm_shuff[triu_idx]).correlation)
+
+        # Compute z-scores
+        z = (rho_obs - np.mean(rhos_null)) / np.std(rhos_null)
+        z_scores.append(z)
+
+    return np.array(z_scores)
+
+
+def ers_z_scores_OLD(patterns, type='fb_to_choice', n_iter=1000):
+    """fb to choice ers helper"""
+    ers_z_scores = []
+    for sub_num in range(1,32):
+        corr_matrix = get_corr_matrix(patterns, sub_num, type)
+        encoding_indices, retrieval_indices, values = get_encoding_retrieval_indices(sub_num, return_values=True)
+        mean_corr = np.mean(corr_matrix[retrieval_indices, encoding_indices])
+        perm_corrs = []
+        for _ in range(n_iter):
+            permuted_retrieval = permute_retrieval_indices(encoding_indices, retrieval_indices, values_to_match = values)
+            perm_corrs.append( np.mean(corr_matrix[permuted_retrieval, encoding_indices]) )
+        z = (mean_corr - np.mean(perm_corrs)) / np.std(perm_corrs, ddof=1)
+        ers_z_scores.append(z)
+
+    return ers_z_scores

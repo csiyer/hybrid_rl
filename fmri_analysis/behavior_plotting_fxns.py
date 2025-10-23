@@ -156,7 +156,7 @@ def fit_logistic(x,y):
 def episodic_incremental(data, x_cols, y_cols, x_texts, y_texts, logistic_fit=False, shaded=None, ylim=None, subtitles = ['','',''], title='',**kwargs):
     n_plots = len(x_cols)
     fig,axs = plt.subplots(1,n_plots, figsize=(n_plots*4,4), dpi=300)
-    fig.suptitle(title)
+    fig.suptitle(title,fontsize=18)
     if 'data2' in kwargs:
         data_arr = [data.copy(), kwargs['data2'].copy()]
     else: 
@@ -212,7 +212,7 @@ def episodic_incremental(data, x_cols, y_cols, x_texts, y_texts, logistic_fit=Fa
 def rt_plot(data, x_cols, x_texts, nbins=11, subtitles = ['','',''], title=''):
     data = data[~pd.isna(data.RT)].copy()
     fig,axs = plt.subplots(1,2, figsize=(4,3),sharey=True,dpi=300)
-    fig.suptitle(title)
+    fig.suptitle(title,fontsize=14)
 
     for i,(ax,x_col,x_text,subtitle) in enumerate(zip(axs,x_cols,x_texts,subtitles)):
         # bin if necessary
@@ -232,13 +232,13 @@ def rt_plot(data, x_cols, x_texts, nbins=11, subtitles = ['','',''], title=''):
 
         ax.set_ylim(700,950)
         if i==0:
-            ax.set_ylabel('Response Time (ms)', fontsize=10)
+            ax.set_ylabel('Response Time (ms)', fontsize=12)
             ax.set_xticks([0,0.5,1.0])
             # ax.set_xticklabels([])
         else:
             ax.set_xticks([-0.8,0,0.8])
-        ax.set_title(subtitle, fontsize=10)
-        ax.set_xlabel(x_text, fontsize=10)
+        ax.set_title(subtitle, fontsize=12)
+        ax.set_xlabel(x_text, fontsize=12)
         ax.grid(True)
 
     plt.tight_layout()
@@ -269,14 +269,15 @@ def encoding_plot(data, x_cols, x_texts,nbins=11,subtitles = ['',''], title='',)
         # ax.set_ylim(700,950)
         if i==0:
             ax.set_ylabel('Probability of \nMemory-Consistent \nChoice at Retrieval', fontsize=14)
-            ax.set_ylim(0.45,0.71)
-            ax.set_yticks([0.5,0.6,0.7])
-            ax.set_xticks([0.2,0.4,0.6,0.8])
-        elif i == 1:
+        if x_col=='PE_enc':
             ax.set_ylim(0.45,0.71)
             ax.set_yticks([0.5,0.6,0.7])
             # ax.set_xticks([0.2,0.4,0.6,0.8])
-        else:
+        elif x_col=='Q_chosen_enc':
+            ax.set_ylim(0.45,0.71)
+            ax.set_yticks([0.5,0.6,0.7])
+            ax.set_xticks([0.2,0.4,0.6,0.8])
+        elif x_col=='RevT_enc':
             ax.set_ylim(0.35,0.65)
             ax.set_xticks([0,10,20])
             ax.set_yticks([0.4,0.5,0.6])
