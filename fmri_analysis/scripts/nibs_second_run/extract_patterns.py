@@ -27,7 +27,7 @@ def process_one_sub(sub_num):
         elif roi == 'vmpfc':
             roi_mask_file = '/burg/dslab/users/csi2108/hybrid_mri_CSI/masks/vmpfc_neurovault.nii'
         elif roi == 'a1':
-            roi_mask_file = '/burg/dslab/users/csi2108/hybrid_mri_CSI/masks/bl_heschl_a1.nii.gz'
+            roi_mask_file = '/burg/dslab/users/csi2108/hybrid_mri_CSI/masks/bl_a1_HO.nii.gz'
         # combine brain mask with roi mask (sometimes they are not totally overlapping)
         roi_mask_bool = nib.load(roi_mask_file).get_fdata().astype(bool)
         sub_mask_indices = np.where( sub_brainmask_bool & roi_mask_bool )
