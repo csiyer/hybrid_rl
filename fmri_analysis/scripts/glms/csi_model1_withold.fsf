@@ -30,7 +30,7 @@ set fmri(featwatcher_yn) 0
 set fmri(sscleanup_yn) 0
 
 # Output directory
-set fmri(outputdir) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/csi_model1_v3_withold.feat"
+set fmri(outputdir) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/csi_model1_withold.feat"
 
 # TR(s)
 set fmri(tr) 2.000000
@@ -359,7 +359,7 @@ set fmri(ortho1.11) 0
 set fmri(ortho1.12) 0
 
 # EV 2 title
-set fmri(evtitle2) "choice_newt"
+set fmri(evtitle2) "choice"
 
 # Basic waveform shape (EV 2)
 # 0 : Square
@@ -391,7 +391,7 @@ set fmri(tempfilt_yn2) 1
 set fmri(deriv_yn2) 1
 
 # Custom EV file (EV 2)
-set fmri(custom2) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_noc_runXXRUNXX.txt"
+set fmri(custom2) "/burg/dslab/users/csi2108/hybrid_mri_CSI/behavior/XXSUBXX_output/EV_files/choice_runXXRUNXX.txt"
 
 # Orthogonalise EV 2 wrt EV 0
 set fmri(ortho2.0) 0

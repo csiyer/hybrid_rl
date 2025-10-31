@@ -6,7 +6,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.spatial.distance import cdist
-from scipy.stats import spearmanr, rankdata
+from sklearn.model_selection import cross_val_score, KFold, cross_val_predict
+from sklearn.linear_model import LogisticRegression
 from tqdm import tqdm
 
 bids_dir = '/Volumes/shohamy-locker/chris/hybrid_mri_bids'
@@ -53,56 +54,130 @@ def get_dist_matrix(all_patterns, sub_num, trial_type):
         return cdist(patterns_choice, patterns_fb, metric='euclidean') # mat[i,j] gives distance from CHOICE[i] to FB[j]
 
 
+def decode_reward(patterns, trial_type='fb'):
+    acc = []
+    for sub in range(1,32):
+        sub_patterns = patterns[sub][trial_type]
+        beh_data = get_beh_data(sub)
+        if trial_type == 'fb':
+            rewards = beh_data.Outcome.values.astype(str)
+        elif trial_type == 'choice':
+            rewards = beh_data[beh_data.OldT==1].ObjPP.values.astype(str)
+            sub_patterns = sub_patterns[beh_data.OldT==1]
+        
+        model=LogisticRegression(max_iter=500)
+        cv = KFold(n_splits=10, shuffle=True, random_state=42)
+        scores = cross_val_score(model, sub_patterns, rewards, cv=cv, scoring='accuracy')
+        acc.append(np.mean(scores))
+    return acc
+
+######## for permutation testing
+
+def get_encoding_retrieval_indices(sub_num, only_unlucky=False, return_values=False, return_runs=False):
+    """
+    find retrieval trials and their corresponding encoding trials
+    exclude pairs with encoding trials having no response
+    """
+    beh_data = get_beh_data(sub_num)
+    encoding_indices, retrieval_indices, value, run = [],[],[],[]
+    for i in range(len(beh_data)):
+        if beh_data.OldT.iloc[i] == 1:
+            enc_trial = beh_data.index[beh_data.Trial == beh_data.encTrialNum.iloc[i]] # idx of row whose Trial is the encTrialNum of retrieval trial
+            if len(enc_trial) == 1: # this rules out instances when the encoding trial was invalid (no response) and is therefore absent in beh_data
+                if not only_unlucky or beh_data.Q_diff.iloc[i] < 0: # either including all trials, or if not, just the unlucky retrieval choices
+                    encoding_indices.append(enc_trial[0])
+                    retrieval_indices.append(i)
+                    value.append(beh_data.ObjPP.iloc[i])
+                    run.append(beh_data.Run.iloc[i])
+    if return_values and return_runs:
+        return np.array(encoding_indices), np.array(retrieval_indices), np.array(value), np.array(run)
+    elif return_values:
+        return np.array(encoding_indices), np.array(retrieval_indices), np.array(value)
+    return np.array(encoding_indices), np.array(retrieval_indices)
+
+
+
+import numpy as np
+
+def permute_retrieval_indices(encoding_idx, retrieval_idx, values_to_match=None, min_sep=10, max_attempts=100):
+    """
+    Permute retrieval_idx while matching value pairings, enforcing a minimum separation of 10 trials.
+    """
+    if values_to_match is None:
+        values_to_match = np.zeros_like(retrieval_idx)
+    permuted = np.empty_like(retrieval_idx)
+    for val in np.unique(values_to_match):
+        idxs = np.nonzero(values_to_match == val)[0]
+        if len(idxs) <= 1:
+            print(f"Warning: only 1 datapoint for value group during permutation!")
+        # try several times until distance condition is met
+        for _ in range(max_attempts):
+            shuffled = np.random.permutation(retrieval_idx[idxs])
+            # check minimum distance constraint
+            too_close = np.abs(shuffled - encoding_idx[idxs]) < min_sep
+            if not np.any(too_close):
+                permuted[idxs] = shuffled
+                break
+        else:
+            raise ValueError(f"Could not satisfy permutation tests in {max_attempts} attempts.")
+    return permuted
+
+from sklearn.metrics.pairwise import cosine_similarity
 def rsa_value_models(patterns, trial_type, n_perm=1000):
     """Compute within-value correlation and compare to null from within-subject permutation, 
-    return group mean and null dist"""
+    return group mean and null dist. Permutes trial labels, only across-run correlations included."""
 
-    subj_data = [] # tuples with the neural and model RDMs
-    group_corrs = [] # z-transformed spearman rank coefficient between 
+    subj_data = []  # store neural RDM, model values, and info for permutations
+    group_corrs = []  # Fisher z-transformed Spearman rho per subject
 
-    # precompute neural/model RDMs once per subject
-    for subj in range(1,32):
+    for subj in range(1, 32):
         beh_data = get_beh_data(subj)
         if trial_type == 'fb':
             mask = beh_data.OldT == 0
-            y = beh_data[mask].Outcome.values
+            vals = beh_data[mask].Outcome.values
         elif trial_type == 'choice':
             mask = beh_data.OldT == 1
-            y = beh_data[mask].ObjPP.values
+            vals = beh_data[mask].ObjPP.values
         elif trial_type == 'choice_new':
             trial_type = 'choice'
             mask = beh_data.OldT == 0
-            y = beh_data[mask].Outcome.values
+            vals = beh_data[mask].Outcome.values
+        runs = beh_data.Run.values[mask]
 
-        
         X = patterns[subj][trial_type][mask]
-
         triu_idx = np.triu_indices(len(X), k=1)
-        neural_rdm_upper = (1 - np.corrcoef(X))[triu_idx]
-        model_rdm_upper = np.abs(y[:, None] - y[None, :])[triu_idx]
-        neural_ranked = rankdata(neural_rdm_upper)
-        model_ranked = rankdata(model_rdm_upper)
-        
-        rho = spearmanr(neural_ranked, model_ranked).correlation
-        group_corrs.append(np.arctanh(rho)) # Fisher z-transform
-        subj_data.append((neural_rdm_upper, model_rdm_upper))
+        across_run_mask = runs[triu_idx[0]] != runs[triu_idx[1]]
 
-    # null distribution via permutation
+        # neural RDM (pairwise dissimilarities)
+        neural_rdm_upper = (1 - np.corrcoef(X, rowvar=True))[triu_idx][across_run_mask]
+        # compute model RDM (pairwise differences)
+        model_rdm_upper = np.abs(vals[:, None] - vals[None, :])[triu_idx][across_run_mask]
+
+        r = np.corrcoef(neural_rdm_upper, model_rdm_upper)[0, 1]
+        group_corrs.append(np.arctanh(r))  # Fisher z-transform
+        subj_data.append((neural_rdm_upper, vals, triu_idx, across_run_mask))
+
+    # null distribution via trial-label permutation
     group_null = []
     for _ in tqdm(range(n_perm)):
         subj_nulls = []
-        for neural,model in subj_data:
-            neural_shuffled = np.random.permutation(neural)
-            rho = np.corrcoef(neural_shuffled, model)[0,1]
-            subj_nulls.append(np.arctanh(rho)) # Fisher z-transform
-        group_null.append(np.mean(subj_nulls))
-    
+        for neural_rdm_upper, vals, triu_idx, across_run_mask in subj_data:
+            # permute value labels and recompute model RDM
+            vals_perm = np.random.permutation(vals)
+            model_rdm_perm = np.abs(vals_perm[:, None] - vals_perm[None, :])[triu_idx][across_run_mask]
+            r_perm = np.corrcoef(neural_rdm_upper, model_rdm_perm)[0, 1]
+            subj_nulls.append(np.arctanh(r_perm))
+
+        # now we need to boostrap (sample with replacement) the subject null values to account for subject variability
+        # subj_nulls = np.random.choice(subj_nulls, replace=True)
+        group_null.append(np.mean(subj_nulls))  # group-level mean of the boostrapped sample
+
+    print(f"Permutation test p = {np.mean(group_null > np.mean(group_corrs))}")
     return group_corrs, group_null
 
 
 def ers_model(patterns, trial_type='fb_to_choice', n_perm=1000):
     """fb to choice ers helper"""
-
     group_ers = []
     subj_data = []
     for subj in range(1,32):
@@ -116,84 +191,49 @@ def ers_model(patterns, trial_type='fb_to_choice', n_perm=1000):
     for _ in tqdm(range(n_perm)):
         subj_nulls = []
         for corr_matrix, encoding_indices, retrieval_indices, values in subj_data:
-            permuted_retrieval = permute_retrieval_indices(encoding_indices, retrieval_indices, values_to_match = values)
+            permuted_retrieval = permute_retrieval_indices(encoding_indices, retrieval_indices,
+                                                            values_to_match = values, min_sep=10)
             perm_ers_z = np.arctanh(corr_matrix[permuted_retrieval, encoding_indices])
             subj_nulls.append(np.mean(perm_ers_z))
-        group_null.append(np.mean(subj_nulls))
+        # now we need to boostrap (sample with replacement) the subject null values to account for subject variability
+        # subj_nulls = np.random.choice(subj_nulls, replace=True)
+        group_null.append(np.mean(subj_nulls))  # group-level mean of the boostrapped sample
 
+    print(f'Permutation test p = {np.mean( group_null > np.mean(group_ers) )}')
     return group_ers, group_null
 
 
+def ers_kernel(patterns, trial_type='fb_to_choice'):
+    enc_to_ret,ret_to_enc = [],[] 
+    for sub_num in range(1,32):
+        sub_enc_to_ret,sub_ret_to_enc = [],[] 
+        beh_data = get_beh_data(sub_num)
+        corr_matrix = get_corr_matrix(patterns, sub_num, trial_type)
+        encoding_indices,retrieval_indices = get_encoding_retrieval_indices(sub_num)
 
-######## for permutation testing
+        for enc_idx,ret_idx in zip(encoding_indices, retrieval_indices):
+            enc_window_vals = np.repeat(np.nan, 11) # 5 trials before encoding and 5 trials after
+            for i,step in enumerate(range(-5,6)):
+                enc_idx_to_check = enc_idx + step
+                # make sure it's a valid trial and control to be not crossing a reversal
+                if 0 < enc_idx_to_check < len(beh_data) and beh_data.LuckyDeck.iloc[enc_idx_to_check] == beh_data.LuckyDeck.iloc[enc_idx]:
+                    # if beh_data.Outcome.iloc[enc_idx_to_check] == beh_data.Outcome.iloc[ret_idx]:
+                    enc_window_vals[i] = corr_matrix[ret_idx, enc_idx_to_check]
+            sub_enc_to_ret.append(enc_window_vals)
 
-def get_encoding_retrieval_indices(sub_num, only_unlucky=False, return_values=False):
-    """
-    find retrieval trials and their corresponding encoding trials
-    exclude pairs with encoding trials having no response
-    """
-    beh_data = get_beh_data(sub_num)
-    encoding_indices, retrieval_indices, value = [],[],[]
-    for i in range(len(beh_data)):
-        if beh_data.OldT.iloc[i] == 1:
-            enc_trial = beh_data.index[beh_data.Trial == beh_data.encTrialNum.iloc[i]] # idx of row whose Trial is the encTrialNum of retrieval trial
-            if len(enc_trial) == 1: # this rules out instances when the encoding trial was invalid (no response) and is therefore absent in beh_data
-                if not only_unlucky or beh_data.Q_diff.iloc[i] < 0: # either including all trials, or if not, just the unlucky retrieval choices
-                    encoding_indices.append(enc_trial[0])
-                    retrieval_indices.append(i)
-                    value.append(beh_data.ObjPP.iloc[i])
-    if return_values:
-        return np.array(encoding_indices), np.array(retrieval_indices), np.array(value)
-    return np.array(encoding_indices), np.array(retrieval_indices)
+            ret_window_vals = np.repeat(np.nan, 11) 
+            for i,step in enumerate(range(-5,6)): 
+                ret_idx_to_check = ret_idx + step
+                if 0 < ret_idx_to_check < len(beh_data) and beh_data.LuckyDeck.iloc[ret_idx_to_check] == beh_data.LuckyDeck.iloc[ret_idx]: 
+                    # if beh_data.ObjPP.iloc[ret_idx_to_check] == beh_data.ObjPP.iloc[ret_idx]:
+                    ret_window_vals[i] = corr_matrix[ret_idx_to_check, enc_idx]
+            sub_ret_to_enc.append(ret_window_vals)
 
+        # get subject mean at each index and add to the group array 
+        enc_to_ret.append(np.nanmean(sub_enc_to_ret, axis=0))
+        ret_to_enc.append(np.nanmean(sub_ret_to_enc, axis=0))
 
-def permute_retrieval_indices(encoding_indices, retrieval_indices, values_to_match=None, 
-                              min_sep=None, max_sep=None, max_tries=1000, group_max_tries=300):
-    """
-    Shuffle encoding-retrieval pairs so they all have new pairs.
-    Return: permuted retrieval indices satisfying constraint
-    values_to_match: if provided, only permutes within value (i.e., encoding trials are paired with retrieval trials with same ObjPP)
-    """
-    if values_to_match is None:
-        values_to_match = np.zeros_like(retrieval_indices)  # all same group
-
-    for _ in range(max_tries):
-        permuted = retrieval_indices.copy()
-        success = True  # track if all groups succeeded
-
-        for val in np.unique(values_to_match):
-            group_indices = np.where(values_to_match == val)[0]
-            group_retrievals = retrieval_indices[group_indices]
-            group_encodings = encoding_indices[group_indices]
-
-            if len(group_indices) < 2:
-                continue  # only 1 trial with this value, do nothing for this group
-
-            for _ in range(group_max_tries):
-                shuffled = np.random.permutation(group_retrievals)
-
-                # ensure no preserved pairing
-                if np.any(shuffled == group_retrievals):
-                    continue
-                # check distance constraint
-                if min_sep is not None and max_sep is not None:
-                    dists = np.abs(shuffled - group_encodings)
-                    if not np.all((dists >= min_sep) & (dists <= max_sep)):
-                        continue
-
-                # valid permutation for this group, break the for loop
-                permuted[group_indices] = shuffled
-                break
-            else:
-                # group failed too many times — give up on this whole attempt
-                success = False
-                break
-
-        if success:
-            return permuted
-
-    raise ValueError(f"Could not generate valid permutation after {max_tries} attempts.")
-
+    return enc_to_ret, ret_to_enc
 
 
 ################# PLOTTING
@@ -235,13 +275,32 @@ def simple_violin(x1, x2=[], NODATA=False, **kwargs):
     plt.show()
 
 
-def null_violin(true_data, null_data, PLOTDATA=True, **kwargs):
+def null_violin(data_dict, ONLYNULL=False, **kwargs):
+    n = len(data_dict.keys())
+    plt.figure(figsize=kwargs.get('figsize', (n*4-2, 4)), dpi=kwargs.get('dpi', None))
+    for i,roidata in enumerate(data_dict.values()):
+        # plot null distribution i ngray
+        sns.violinplot(x=i, y=roidata['null'], color='lightgray', inner=None, linewidth=0, label='permuted null' if i==0 else None)
+        plt.hlines(y=np.percentile(roidata['null'], 95), xmin=i-0.35, xmax=i+0.35,
+                    color='darkgray', linestyle='--', linewidth=1.5, label=f'95th percentile' if i==0 else None)
+        if not ONLYNULL:
+            plt.errorbar(x=i, y=np.mean(roidata['true']),
+                     fmt='o', markersize=14, color=kwargs.get('color', 'royalblue'), capsize=6,
+                     elinewidth=2)
+    plt.title(kwargs.get('title', ''), fontsize=20)
+    plt.xticks(np.arange(n), labels=kwargs.get('xticklabels', list(data_dict.keys())), fontsize=16)
+    plt.ylabel(kwargs.get('ylabel', ''), fontsize=16)
+    if 'ylim' in kwargs: plt.ylim(kwargs['ylim'])
+    if 'yticks' in kwargs: plt.yticks(kwargs['yticks'])
+    if 'legend' in kwargs and kwargs['legend']:
+        plt.legend(loc='lower right')
+    plt.tight_layout()
+    plt.show()
+
+
+def null_violin_single(true_data, null_data, PLOTDATA=True, **kwargs):
     figsize = kwargs.get('figsize', (5, 4))
     dpi = kwargs.get('dpi', None)
-    color = kwargs.get('color', 'royalblue')
-    
-    mean_true = np.mean(true_data)
-    se_true = np.std(true_data, ddof=1) / np.sqrt(len(true_data))
     
     plt.figure(figsize=figsize, dpi=dpi)
     plt.title(kwargs.get('title', ''), fontsize=20)
@@ -249,7 +308,7 @@ def null_violin(true_data, null_data, PLOTDATA=True, **kwargs):
     sns.violinplot(y=null_data, color='lightgray', inner=None, linewidth=0, label='permuted null')
     plt.axhline(y=np.percentile(null_data, 95), color='darkgray', linestyle='--', linewidth=1.5, label=f'95th percentile')
     if PLOTDATA:
-        plt.errorbar(x=0, y=np.mean(true_data), yerr= np.std(true_data, ddof=1) / np.sqrt(len(true_data)),
+        plt.errorbar(x=0, y=np.mean(true_data),
                      fmt='o', markersize=14, color=kwargs.get('color', 'royalblue'), capsize=6,
                      elinewidth=2, label=kwargs.get('legend_label', None)
         )
@@ -266,9 +325,8 @@ def null_violin(true_data, null_data, PLOTDATA=True, **kwargs):
 
 
 def simple_bar(x1, x2, **kwargs):
-    plt.figure(figsize=(6, 4))
-    if 'title' in kwargs:
-        plt.title(kwargs['title'])
+    plt.figure(figsize=kwargs.get('figsize',(6,4)))
+    plt.title(kwargs.get('title', None))
     # sns.violinplot([x1,x2], palette=['blue','orange'], inner=None, linewidth=1, alpha = 0.5)
     plt.bar([0, 1], [np.mean(x1), np.mean(x2)], color=['blue', 'orange'], alpha=0.6)
     for i in range(len(x1)):

@@ -30,7 +30,7 @@ set fmri(featwatcher_yn) 0
 set fmri(sscleanup_yn) 0
 
 # Output directory
-set fmri(outputdir) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/csi_model1_v3_noold.feat"
+set fmri(outputdir) "/burg/dslab/users/csi2108/hybrid_mri_CSI/TCST0XXSUBXX/hybrid_rXXRUNXX/csi_model1_noold.feat"
 
 # TR(s)
 set fmri(tr) 2.000000
